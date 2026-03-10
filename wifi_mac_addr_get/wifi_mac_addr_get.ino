@@ -1,6 +1,7 @@
 #include <esp_wifi.h>
 #include <Wifi.h>
 
+// getMacAddress(): Obtains, formats, and outputs the MAC address of ESP32
 void getMacAddress() {
   // Variable setup to hold MAC address
   uint8_t macAddr[6];
@@ -9,7 +10,7 @@ void getMacAddress() {
   // Check for error obtaining MAC address
   if (err != ESP_OK) {
     // Output error message to serial monitor
-    Serial.println("Error getting MAC address");
+    Serial.println("Error obtaining MAC address");
     return;
   }
 
@@ -24,6 +25,7 @@ void getMacAddress() {
   }
 }
 
+// Runs once at startup to initialize program values and settings
 void setup() {
   // Initialize serial monitor
   Serial.begin(115200);
@@ -36,6 +38,7 @@ void setup() {
   getMacAddress();
 }
 
+// Runs continuously after setup() to perform main program functions
 void loop() {
   // Empty since MAC address needs to be obtained only once during setup
 }
