@@ -13,10 +13,10 @@ struct sense_msg {
     float force_data;
 };
 
-// Structure for Reset
-struct reset_msg {
+// Structure for Zeroing
+struct zero_msg {
     MessageType msg_type;
-    bool reset_signal;
+    bool zero_signal;
 };
 
 #endif
