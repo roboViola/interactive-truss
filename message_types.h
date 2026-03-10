@@ -9,13 +9,13 @@ enum MessageType : uint8_t {
 
 // Structure for Sensor Data
 struct sense_msg {
-    MessageType msg_type;
+    MessageType msg_type = MSG_DATA;
     float force_data;
 };
 
 // Structure for Zeroing
 struct zero_msg {
-    MessageType msg_type;
+    MessageType msg_type = MSG_RESET;
     bool zero_signal;
 };
 
