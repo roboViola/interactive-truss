@@ -69,7 +69,7 @@ void loop() {
 
     if (send_err != ESP_OK) {
         // FIXME: Update to flash one of the LEDs as an error code
-        Serial.println("Error adding peer");
+        Serial.println("Error sending data");
         return;
     }
 
