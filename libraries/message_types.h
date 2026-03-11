@@ -2,20 +2,20 @@
 #define MESSAGE_TYPES_H
 
 // Enumerated Datatype for Message Type
-enum MessageType : uint8_t {
+enum class MessageType : uint8_t {
     MSG_DATA,
     MSG_RESET
-}
+};
 
 // Structure for Sensor Data
 struct sense_msg {
-    MessageType msg_type = MSG_DATA;
+    MessageType msg_type = MessageType::MSG_DATA;
     float force_data;
 };
 
 // Structure for Zeroing
 struct zero_msg {
-    MessageType msg_type = MSG_RESET;
+    MessageType msg_type = MessageType::MSG_RESET;
     bool zero_signal;
 };
 

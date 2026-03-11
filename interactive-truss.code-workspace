@@ -2,7 +2,7 @@
   "folders": [
     { "path": "data_hub_module" },
     { "path": "link_module" },
-    { "path": "wifi_mac_addr_get" }
+    { "path": "wifi_mac_addr_get" },
   ],
 
   "settings": {
