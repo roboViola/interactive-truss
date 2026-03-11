@@ -1,5 +1,5 @@
 #include <esp_wifi.h>
-#include <Wifi.h>
+#include <WiFi.h>
 
 // getMacAddress(): Obtains, formats, and outputs the MAC address of ESP32
 void getMacAddress() {
@@ -32,7 +32,7 @@ void setup() {
 
   // Setup WiFi station and start WiFi
   WiFi.mode(WIFI_STA);
-  WiFI.STA.begin();
+  WiFi.STA.begin();
 
   // Obtain the MAC address
   getMacAddress();
