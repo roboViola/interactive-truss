@@ -21,7 +21,7 @@ bool OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
     return status == ESP_NOW_SEND_SUCCESS;
 }
 
-bool OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length) {
+void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length) {
     memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
 
     if (zeroMsg.zero_signal == true) {
@@ -37,6 +37,9 @@ void setup() {
     
     // Set callback function of transmitted packet status
     esp_now_register_send_cb(esp_now_send_cb_t(OnDataSent));
+
+    // Set callback function of received packed status
+    esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv));
 
     // Set peer information
     memcpy(peerInfo.peer_addr, hubAddr, sizeof(hubAddr));
