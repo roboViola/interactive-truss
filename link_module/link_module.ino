@@ -15,11 +15,18 @@ esp_now_peer_info_t peerInfo;
 HX711 forceSensor;
 
 // Define offset and scaling 
-int32_t sensor_offset = 0; // FIXME: add actual value
 float sensor_scale = 0; // FIXME: add actual vlue
 
 bool OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
     return status == ESP_NOW_SEND_SUCCESS;
+}
+
+bool OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length) {
+    memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
+
+    if (zeroMsg.zero_signal == true) {
+        forceSensor.tare();
+    }
 }
 
 // Runs once at startup to initialize program values and settings
@@ -59,7 +66,6 @@ void setup() {
     // Setup HX711 Module
     forceSensor.begin(0, 0); // FIXME: Add dataPin and clockPin ports, respectively
     forceSensor.set_raw_mode(); // Sets the HX711 module to raw read (no averaging)
-    forceSensor.set_offset(sensor_offset);
     forceSensor.set_scale(sensor_scale);
 }
 
