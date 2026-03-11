@@ -8,14 +8,14 @@ sense_msg forceMsg;
 zero_msg zeroMsg;
 
 // Define variables for data transmission
-uint8_t linkAddr[6];
+uint8_t hubAddr[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // Replace with Hub Module Address
 esp_now_peer_info_t peerInfo;
 
 // Define HX711 Module
 HX711 forceSensor;
 
 // Define offset and scaling 
-float sensor_scale = 0; // FIXME: add actual vlue
+float sensor_scale = 0; // FIXME: add actual value
 
 bool OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
     return status == ESP_NOW_SEND_SUCCESS;
@@ -35,22 +35,11 @@ void setup() {
     WiFi.mode(WIFI_STA);
     esp_err_t init_err = esp_now_init();
     
-    // Obtain MAC address as 6 digit array
-    WiFi.macAddress(linkAddr);
-
-    // Check for error obtaining MAC address
-    if (init_err != ESP_OK) {
-        // Output error message to serial monitor
-        // FIXME: Update to flash one of the LEDs as an error code
-        Serial.println("Error obtaining MAC address");
-        return;
-    }
-    
     // Set callback function of transmitted packet status
     esp_now_register_send_cb(esp_now_send_cb_t(OnDataSent));
 
     // Set peer information
-    memcpy(peerInfo.peer_addr, linkAddr, sizeof(linkAddr));
+    memcpy(peerInfo.peer_addr, hubAddr, sizeof(hubAddr));
     peerInfo.channel = 0;
     peerInfo.encrypt = false;
 
@@ -76,5 +65,13 @@ void loop() {
         forceMsg.force_data = forceSensor.get_units();
     }
 
-    esp_err_t send_err = esp_now_send(linkAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));
+    esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));
+
+    if (send_err != ESP_OK) {
+        // FIXME: Update to flash one of the LEDs as an error code
+        Serial.println("Error adding peer");
+        return;
+    }
+
+    delay(150); // Reduce sample rate and data transmission to conserve battery life
 }
