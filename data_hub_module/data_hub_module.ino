@@ -57,12 +57,21 @@ const bool ZERO_PIN = 0; // FIXME: Replace with actual pin number
 
 // Runs once at startup to initialize program values and settings
 void setup() {
-    // Set device to be a WiFi Station
-    WiFi.mode(WIFI_STA);
+    // Set device to be a WiFi Access-Point Station
+    WiFi.mode(WIFI_AP_STA);
     esp_err_t init_err = esp_now_init();
+
+    if (init_err != ESP_OK) {
+        // FIXME: Update to flash one of the LEDs as an error code
+        Serial.println("Error initializing WiFi Access Point Station");
+        return;
+    }
     
     // Set callback function of transmitted packet status
     esp_now_register_send_cb(esp_now_send_cb_t(OnDataSent));
+
+    // Set callback function of received packed status
+    esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv));
 
     // Set peer information
     for (uint8_t i = 0; i < sizeof(linkAddrs) / sizeof(linkAddrs[0]); i++) {

@@ -36,6 +36,12 @@ void setup() {
     // Set device to be a WiFi Station
     WiFi.mode(WIFI_STA);
     esp_err_t init_err = esp_now_init();
+
+    if (init_err != ESP_OK) {
+        // FIXME: Update to flash one of the LEDs as an error code
+        Serial.println("Error initializing WiFi Access Point Station");
+        return;
+    }
     
     // Set callback function of transmitted packet status
     esp_now_register_send_cb(esp_now_send_cb_t(OnDataSent));
