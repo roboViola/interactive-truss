@@ -1,5 +1,6 @@
 #include <esp_now.h>
 #include <WiFi.h>
+#include "ESPAsyncWebServer.h"
 #include "../libraries/message_types.h"
 
 // Define structures used for data transmission
@@ -28,6 +29,14 @@ const uint8_t linkAddrs[NUM_LINKS][6] = { // Add all MAC addresses for the links
 };
 float linkForceData[NUM_LINKS]; // Array for all the force data, index maps with linkAddrs
 esp_now_peer_info_t peerInfo;
+
+// Define SSID and password for access-point station
+const char* ssid = "StationDemo";
+const char* password = "StationDemo";
+
+// Set up webserver
+AsyncWebServer server(80); // Use HTTP port 80
+AsyncEventSource events("/events"); // Live updates to webpage viewed on phone or laptop
 
 // Initialize data queues
 QueueHandle_t linkAddrsQueue; // Queue for the received link MAC addresses
@@ -60,6 +69,9 @@ void setup() {
     // Set device to be a WiFi Access-Point Station
     WiFi.mode(WIFI_AP_STA);
     esp_err_t init_err = esp_now_init();
+
+    WiFi.begin(ssid, password);
+
 
     if (init_err != ESP_OK) {
         // FIXME: Update to flash one of the LEDs as an error code
