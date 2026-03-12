@@ -17,10 +17,12 @@ HX711 forceSensor;
 // Define offset and scaling 
 float sensor_scale = 0; // FIXME: add actual value
 
+// OnDataSent(): Executes when data is sent
 bool OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
     return status == ESP_NOW_SEND_SUCCESS;
 }
 
+// OnDataRecv(): Executes when data is received
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length) {
     memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
 
