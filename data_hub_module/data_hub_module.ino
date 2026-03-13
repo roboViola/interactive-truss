@@ -37,6 +37,7 @@ const char* password = "StationDemo";
 // Set up webserver
 AsyncWebServer server(80); // Use HTTP port 80
 AsyncEventSource events("/events"); // Live updates to webpage viewed on phone or laptop
+unsigned long lastEventTime = 0;
 
 // Initialize data queues
 QueueHandle_t linkAddrsQueue; // Queue for the received link MAC addresses
@@ -45,6 +46,9 @@ QueueHandle_t forceDataQueue; // Queue for the received force data
 // Define queue variables for loop processing
 uint8_t linkAddr;
 float forceData;
+
+// Define reset pin
+const bool ZERO_PIN = 0; // FIXME: Replace with actual pin number
 
 // OnDataSent(): Executes when data is sent
 bool OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
@@ -61,8 +65,85 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     xQueueSend(forceDataQueue, &forceMsg.force_data, 0);
 }
 
-// Define reset pin
-const bool ZERO_PIN = 0; // FIXME: Replace with actual pin number
+// HMTL page Index -> Runs when called by callback function
+/* Convert float array to JSON */
+String arrayToJSON()
+{
+  String json = "[";
+
+  for(int i=0;i<NUM_LINKS;i++)
+  {
+    json += String(linkForceData[i]);
+
+    if(i < NUM_LINKS-1)
+      json += ",";
+  }
+
+  json += "]";
+  return json;
+}
+
+/* HTML page */
+const char index_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head>
+<title>Interactive Truss</title>
+<style>
+body {
+    font-family:Arial;
+    margin:20px;
+}
+table {
+    border-collapse:collapse;
+}
+th,td {
+    border:1px solid black;
+    padding:8px;
+    text-align:center;
+}
+</style>
+</head>
+<body>
+<h1>Interactive Truss</h1>
+<table id="trussTable">
+    <tr>
+        <th>Link</th>
+        <th>Value</th>
+    </tr>
+</table>
+
+<script>
+    const table = document.getElementById("trussTable");
+
+    /* Create table rows */
+    for(let i=0;i<NUM_LINKS;i++) {
+        let row = table.insertRow();
+        let linkCell = row.insertCell(0);
+        let valueCell = row.insertCell(1);
+
+        linkCell.innerHTML = "Link " + (i+1);
+
+        valueCell.id = "value"+i;
+        valueCell.innerHTML = "0";
+    }
+
+    /* Connect to ESP32 SSE stream */
+    const source = new EventSource("/events");
+
+    /* Event listener for event.send() */
+    source.addEventListener("update", function(event) {
+        let data = JSON.parse(event.data);
+
+        for(let i=0;i<NUM_LINKS;i++) {
+            document.getElementById("value"+i).innerHTML = data[i];
+        }
+    });
+
+</script>
+</body>
+</html>
+)rawliteral";
 
 // Runs once at startup to initialize program values and settings
 void setup() {
@@ -101,6 +182,15 @@ void setup() {
         }
     }
 
+    // Callback function for requesting the main page of the webserver
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+        request->send(200, "text/html", index_html);
+    });
+    
+    // Start events handler
+    server.addHandler(&events);
+    server.begin();
+
     // Set pin mode for reset pin
     pinMode(ZERO_PIN, INPUT); 
 
@@ -134,6 +224,16 @@ void loop() {
             }
         }
     }
+
+    // Update table data every 400 ms
+    if(millis() - lastEventTime >= 400) {
+        lastEventTime = millis();
+
+        String jsonArray = arrayToJSON();
+
+        // Update table data
+        events.send(jsonArray.c_str(), "update", millis());
+  }
 
     delay(50); // Reduce sample rate and data transmission to conserve battery life
 }
