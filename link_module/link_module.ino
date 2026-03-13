@@ -1,21 +1,65 @@
 #include <esp_now.h>
 #include <WiFi.h>
+#include <Adafruit_NeoPixel.h>
 #include "HX711.h"
 #include "../libraries/message_types.h"
+
+// Addressible LED properties
+const uint8_t NUM_LEDS = 5;
+const uint8_t LED_DATA = 4;
+
+Adafruit_NeoPixel strip(NUM_LEDS, LED_DATA, NEO_GRB + NEO_KHZ800);
+
+// Define colors for the addressible LEDs
+// Pixels are GRB, not RGB
+uint32_t RED = strip.Color(0, 255, 0); // Compression (-)
+uint32_t YELLOW = strip.Color(255, 255, 0); // Zero-Force
+uint32_t BLUE = strip.Color(0, 0, 255); // Tension (+)
 
 // Define structures used for data transmission
 sense_msg forceMsg;
 zero_msg zeroMsg;
 
 // Define variables for data transmission
-uint8_t hubAddr[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // Replace with Hub Module Address
+const uint8_t hubAddr[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // Replace with Hub Module Address
 esp_now_peer_info_t peerInfo;
 
 // Define HX711 Module
+const uint8_t DAT_PIN = 2;
+const uint8_t CLK_PIN = 3;
+
 HX711 forceSensor;
 
 // Define offset and scaling 
-float sensor_scale = 0; // FIXME: add actual value
+const float sensor_scale = 0; // FIXME: add actual value
+
+// SetLightColors(): Determines the color and number of addressible LEDs to turn on
+void SetLightColors(float force) {
+    /* 
+    Force -> LED Conversion
+    - 0.5 <= Force < 10: 1 LED
+    - 10 <= Force < 20: 2 LED
+    - 20 <= Force < 30: 3 LED
+    - 30 <= Force < 40: 4 LED
+    - 40 <= Force < 50: 5 LED
+    */
+
+    // Clear the last colors from the LED strip
+    strip.clear();
+
+    // Check if Zero-Force Member
+    if (abs(force) < 0.5) {
+        strip.fill(YELLOW, 0, 1);
+    }
+    // Check if Compression Member
+    else if (force < 0) {
+        strip.fill(RED, 0, force / 10);
+    }
+    // Check if Tension Member
+    else {
+        strip.fill(BLUE, 0, force / 10);
+    }
+}
 
 // OnDataSent(): Executes when data is sent
 bool OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
@@ -64,21 +108,28 @@ void setup() {
     }
 
     // Setup HX711 Module
-    forceSensor.begin(0, 0); // FIXME: Add dataPin and clockPin ports, respectively
+    forceSensor.begin(DAT_PIN, CLK_PIN);
     forceSensor.set_raw_mode(); // Sets the HX711 module to raw read (no averaging)
     forceSensor.set_scale(sensor_scale);
+
+    // Setup the addressible LED strip
+    strip.begin();
+    strip.show();
 }
 
 // Runs continuously after setup() to perform main program functions
 void loop() {
     // Obtain adjusted force data from the Wheatstone Bridge via the HX711
     if (forceSensor.is_ready()) {
-        forceMsg.force_data = forceSensor.get_units();
+        forceMsg.force_data = forceSensor.get_units(); // Move into structure for transmission
+        SetLightColors(forceMsg.force_data); // Set LED colors
+        strip.show(); // Push the color data out to the addressible LEDs 
     }
 
+    // Sending errors
     esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));
 
-    if (send_err != ESP_OK) {
+    if (send_err != ESP_NOW_SEND_SUCCESS) {
         // FIXME: Update to flash one of the LEDs as an error code
         Serial.println("Error sending data");
         return;
