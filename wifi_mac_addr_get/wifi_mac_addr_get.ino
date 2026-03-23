@@ -29,6 +29,7 @@ void getMacAddress() {
 void setup() {
   // Initialize serial monitor
   Serial.begin(115200);
+  delay(2000);
 
   // Setup WiFi station and start WiFi
   WiFi.mode(WIFI_STA);
