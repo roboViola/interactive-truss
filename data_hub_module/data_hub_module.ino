@@ -10,7 +10,7 @@ zero_msg zeroMsg;
 // Define variables for data transmission
 const uint8_t NUM_LINKS = 16;
 const uint8_t linkAddrs[NUM_LINKS][6] = { // Add all MAC addresses for the links
-    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, // Link 1
+    {0x94, 0x54, 0xC5, 0xB8, 0x07, 0x88}, // Link 1
     {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, // Link 2
     {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, // Link 3
     {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, // Link 4
@@ -147,17 +147,24 @@ th,td {
 
 // Runs once at startup to initialize program values and settings
 void setup() {
+    // Start Serial Terminal
+    Serial.begin(115200);
+    delay(2000); // wait 2 seconds
     // Set device to be a WiFi Access-Point Station
-    WiFi.mode(WIFI_AP_STA);
+    WiFi.mode(WIFI_AP);
     esp_err_t init_err = esp_now_init();
+    //delay(10000);
+    WiFi.softAP(ssid, password);
 
-    WiFi.begin(ssid, password);
-
+    //WiFi.begin(ssid, password);
+    //delay(5000);
+    Serial.print("Setting AP (Access Point)…");
+    Serial.println(WiFi.softAPIP());
 
     if (init_err != ESP_OK) {
         // FIXME: Update to flash one of the LEDs as an error code
         Serial.println("Error initializing WiFi Access Point Station");
-        return;
+        //return;
     }
     
     // Set callback function of transmitted packet status
@@ -178,18 +185,22 @@ void setup() {
         if (peer_err != ESP_OK) {
             // FIXME: Update to flash one of the LEDs as an error code
             Serial.println("Error adding peer");
-            return;
+            //return;
         }
     }
 
     // Callback function for requesting the main page of the webserver
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
         request->send(200, "text/html", index_html);
+        //request->send(200, "text/html", "<h1>Hello from ESP32 Async Server!</h1>");
     });
     
     // Start events handler
     server.addHandler(&events);
+    Serial.println("Getting ready to start server");
     server.begin();
+    Serial.println("Server started");
+    //delay(5000);
 
     // Set pin mode for reset pin
     pinMode(ZERO_PIN, INPUT); 
@@ -201,6 +212,7 @@ void setup() {
 
 // Runs continuously after setup() to perform main program functions
 void loop() {
+    
     // Check if the zero button was pressed
     if (digitalRead(ZERO_PIN) == HIGH) {
         zeroMsg.zero_signal = HIGH;
@@ -210,7 +222,7 @@ void loop() {
 
     if (send_err != ESP_OK) {
         // FIXME: Update to flash one of the LEDs as an error code
-        Serial.println("Error sending data");
+        //Serial.println("Error sending data");
         return;
     }
 
