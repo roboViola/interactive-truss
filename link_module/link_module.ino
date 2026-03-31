@@ -130,13 +130,15 @@ void loop() {
         strip.show(); // Push the color data out to the addressible LEDs 
     }
 
+    esp_now_send(hubAddr, (uint8_t *) "true", sizeof("true"));
+    /*
     // Sending errors
     esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));
+    */
 
     if (send_err != ESP_NOW_SEND_SUCCESS) {
         // FIXME: Update to flash one of the LEDs as an error code
         Serial.println("Error sending data");
-        return;
     }
 
     delay(150); // Reduce sample rate and data transmission to conserve battery life
