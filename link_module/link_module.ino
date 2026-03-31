@@ -21,7 +21,7 @@ sense_msg forceMsg;
 zero_msg zeroMsg;
 
 // Define variables for data transmission
-const uint8_t hubAddr[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // Replace with Hub Module Address
+const uint8_t hubAddr[6] = {0x94, 0x54, 0xC5, 0xB6, 0xE0, 0x88}; // Replace with Hub Module Address
 esp_now_peer_info_t peerInfo;
 
 // Define HX711 Module
@@ -77,13 +77,17 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
 
 // Runs once at startup to initialize program values and settings
 void setup() {
+    // Start serial monitor with 2 second delay
+    Serial.begin(115200);
+    delay(2000);
+    
     // Set device to be a WiFi Station
     WiFi.mode(WIFI_STA);
     esp_err_t init_err = esp_now_init();
 
     if (init_err != ESP_OK) {
         // FIXME: Update to flash one of the LEDs as an error code
-        Serial.println("Error initializing WiFi Access Point Station");
+        Serial.println("Error initializing WiFi Station");
         return;
     }
     
