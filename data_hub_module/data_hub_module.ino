@@ -57,12 +57,17 @@ bool OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 
 // OnDataRecv(): Executes when data is received
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length) {
+    /*
     // Copy received data to data structure
     memcpy(&forceMsg, incomingData, sizeof(forceMsg));
 
     // Add received data to data queue for processing in main loop without packet loss
     xQueueSend(linkAddrsQueue, &mac_addr, 0);
     xQueueSend(forceDataQueue, &forceMsg.force_data, 0);
+    */
+   string test;
+   memcpy(&test, incomingData, sizeof(test))
+   Serial.println(test);
 }
 
 // HMTL page Index -> Runs when called by callback function
