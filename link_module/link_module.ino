@@ -21,7 +21,7 @@ sense_msg forceMsg;
 zero_msg zeroMsg;
 
 // Define variables for data transmission
-const uint8_t hubAddr[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // Replace with Hub Module Address
+const uint8_t hubAddr[6] = {0x94, 0x54, 0xC5, 0xB6, 0xE0, 0x88}; // Replace with Hub Module Address
 esp_now_peer_info_t peerInfo;
 
 // Define HX711 Module

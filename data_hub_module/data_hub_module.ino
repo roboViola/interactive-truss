@@ -10,7 +10,7 @@ zero_msg zeroMsg;
 // Define variables for data transmission
 const uint8_t NUM_LINKS = 16;
 const uint8_t linkAddrs[NUM_LINKS][6] = { // Add all MAC addresses for the links
-    {0x94, 0x54, 0xC5, 0xB8, 0x07, 0x88}, // Link 1
+    {0x94, 0x54, 0xC5, 0xB0, 0x92, 0x68}, // Link 1
     {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, // Link 2
     {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, // Link 3
     {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, // Link 4
@@ -227,8 +227,8 @@ void loop() {
 
     if (send_err != ESP_OK) {
         // FIXME: Update to flash one of the LEDs as an error code
-        //Serial.println("Error sending data");
-        return;
+        Serial.println("Error sending data");
+        //return;
     }
 
     // FIFO unload data from the queues for processing and addition to data arrays
