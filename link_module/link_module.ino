@@ -68,15 +68,21 @@ bool OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 
 // OnDataRecv(): Executes when data is received
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length) {
-    memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
+    /*memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
 
     if (zeroMsg.zero_signal == true) {
         forceSensor.tare();
-    }
+    }*/
+
+    memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
+    Serial.println(zeroMsg.zero_signal);
 }
 
 // Runs once at startup to initialize program values and settings
 void setup() {
+    // Start Serial
+    Serial.begin(115200);
+
     // Set device to be a WiFi Station
     WiFi.mode(WIFI_STA);
     esp_err_t init_err = esp_now_init();
@@ -115,6 +121,9 @@ void setup() {
     // Setup the addressible LED strip
     strip.begin();
     strip.show();
+
+    // TEST
+    forceMsg.force_data = 0;
 }
 
 // Runs continuously after setup() to perform main program functions
@@ -125,6 +134,7 @@ void loop() {
         SetLightColors(forceMsg.force_data); // Set LED colors
         strip.show(); // Push the color data out to the addressible LEDs 
     }
+    forceMsg.force_data = forceMsg.force_data + 1;
 
     // Sending errors
     esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));

@@ -65,9 +65,9 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     xQueueSend(linkAddrsQueue, &mac_addr, 0);
     xQueueSend(forceDataQueue, &forceMsg.force_data, 0);
     */
-   string test;
-   memcpy(&test, incomingData, sizeof(test))
-   Serial.println(test);
+
+   memcpy(&forceMsg, incomingData, sizeof(incomingData));
+   Serial.println(forceMsg.force_data);
 }
 
 // HMTL page Index -> Runs when called by callback function
@@ -208,20 +208,31 @@ void setup() {
     //delay(5000);
 
     // Set pin mode for reset pin
+    Serial.println("Prior to Pin Mode");
     pinMode(ZERO_PIN, INPUT); 
-
+    Serial.println("Pin Mode Set Successfully");
     // Create force data queue
     linkAddrsQueue = xQueueCreate(NUM_LINKS, sizeof(uint8_t));
     forceDataQueue = xQueueCreate(NUM_LINKS, sizeof(float));
+    Serial.println("Queues Created Successfully");
+
+    // TEST
+    zeroMsg.zero_signal = false;
+
 }
 
 // Runs continuously after setup() to perform main program functions
 void loop() {
+    Serial.println("Loop");
+
     
     // Check if the zero button was pressed
     if (digitalRead(ZERO_PIN) == HIGH) {
         zeroMsg.zero_signal = HIGH;
     }
+    
+    // Data Transmission Debug Test
+    zeroMsg.zero_signal = !zeroMsg.zero_signal;
 
     esp_err_t send_err = esp_now_send(0, (uint8_t *) &zeroMsg, sizeof(zeroMsg));
 
