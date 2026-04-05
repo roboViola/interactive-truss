@@ -158,7 +158,7 @@ void setup() {
     Serial.begin(115200);
     delay(2000); // wait 2 seconds
     // Set device to be a WiFi Access-Point Station
-    WiFi.mode(WIFI_AP);
+    WiFi.mode(WIFI_AP_STA);
     esp_err_t init_err = esp_now_init();
     //delay(10000);
     WiFi.softAP(ssid, password);
@@ -266,5 +266,5 @@ void loop() {
         events.send(jsonArray.c_str(), "update", millis());
   }
 
-    delay(50); // Reduce sample rate and data transmission to conserve battery life
+    delay(500); // Reduce sample rate and data transmission to conserve battery life
 }
