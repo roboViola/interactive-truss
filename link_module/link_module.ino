@@ -63,16 +63,21 @@ void SetLightColors(float force) {
 
 // OnDataSent(): Executes when data is sent
 bool OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+    Serial.println("OnDataSent");
     return status == ESP_NOW_SEND_SUCCESS;
 }
 
 // OnDataRecv(): Executes when data is received
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length) {
-    memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
+    /*memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
 
     if (zeroMsg.zero_signal == true) {
         forceSensor.tare();
-    }
+    }*/
+
+    Serial.println("OnDataRecv");
+    memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
+    Serial.println(zeroMsg.zero_signal);
 }
 
 // Runs once at startup to initialize program values and settings
@@ -91,6 +96,7 @@ void setup() {
         return;
     }
     
+    Serial.println("Success initializing WiFi Access Point Station");
     // Set callback function of transmitted packet status
     esp_now_register_send_cb(esp_now_send_cb_t(OnDataSent));
 
@@ -110,6 +116,7 @@ void setup() {
         Serial.println("Error adding peer");
         return;
     }
+    Serial.println("Success adding peer");
 
     // Setup HX711 Module
     forceSensor.begin(DAT_PIN, CLK_PIN);
@@ -119,23 +126,29 @@ void setup() {
     // Setup the addressible LED strip
     strip.begin();
     strip.show();
+
+    // TEST
+    forceMsg.force_data = 0;
 }
 
 // Runs continuously after setup() to perform main program functions
 void loop() {
+    Serial.println("Loop");
     // Obtain adjusted force data from the Wheatstone Bridge via the HX711
     if (forceSensor.is_ready()) {
         forceMsg.force_data = forceSensor.get_units(); // Move into structure for transmission
         SetLightColors(forceMsg.force_data); // Set LED colors
         strip.show(); // Push the color data out to the addressible LEDs 
     }
+    forceMsg.force_data = forceMsg.force_data + 1;
+    Serial.println(forceMsg.force_data);
 
     esp_now_send(hubAddr, (uint8_t *) "true", sizeof("true"));
-    /*
+    
     // Sending errors
     esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));
-    */
-
+    Serial.println("Sent Data");
+    
     if (send_err != ESP_NOW_SEND_SUCCESS) {
         // FIXME: Update to flash one of the LEDs as an error code
         Serial.println("Error sending data");

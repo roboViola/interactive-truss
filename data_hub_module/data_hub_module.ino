@@ -10,8 +10,8 @@ zero_msg zeroMsg;
 // Define variables for data transmission
 const uint8_t NUM_LINKS = 16;
 const uint8_t linkAddrs[NUM_LINKS][6] = { // Add all MAC addresses for the links
-    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, // Link 1
-    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, // Link 2
+    {0x94, 0x54, 0xC5, 0xB0, 0x92, 0x68}, // Link 1
+    {0x94, 0x54, 0xC5, 0xB6, 0xDD, 0x58}, // Link 2
     {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, // Link 3
     {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, // Link 4
     {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, // Link 5
@@ -52,17 +52,24 @@ const bool ZERO_PIN = 0; // FIXME: Replace with actual pin number
 
 // OnDataSent(): Executes when data is sent
 bool OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+    Serial.println("OnDataSent");
     return status == ESP_NOW_SEND_SUCCESS;
 }
 
 // OnDataRecv(): Executes when data is received
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length) {
+    /*
     // Copy received data to data structure
     memcpy(&forceMsg, incomingData, sizeof(forceMsg));
 
     // Add received data to data queue for processing in main loop without packet loss
     xQueueSend(linkAddrsQueue, &mac_addr, 0);
     xQueueSend(forceDataQueue, &forceMsg.force_data, 0);
+    */
+    
+    Serial.println("OnDataRecv");
+    memcpy(&forceMsg, incomingData, sizeof(forceMsg));
+    Serial.println(forceMsg.force_data);
 }
 
 // HMTL page Index -> Runs when called by callback function
@@ -147,17 +154,24 @@ th,td {
 
 // Runs once at startup to initialize program values and settings
 void setup() {
+    // Start Serial Terminal
+    Serial.begin(115200);
+    delay(2000); // wait 2 seconds
     // Set device to be a WiFi Access-Point Station
     WiFi.mode(WIFI_AP_STA);
     esp_err_t init_err = esp_now_init();
+    //delay(10000);
+    WiFi.softAP(ssid, password);
 
-    WiFi.begin(ssid, password);
-
+    //WiFi.begin(ssid, password);
+    //delay(5000);
+    Serial.print("Setting AP (Access Point)…");
+    Serial.println(WiFi.softAPIP());
 
     if (init_err != ESP_OK) {
         // FIXME: Update to flash one of the LEDs as an error code
         Serial.println("Error initializing WiFi Access Point Station");
-        return;
+        //return;
     }
     
     // Set callback function of transmitted packet status
@@ -177,41 +191,58 @@ void setup() {
 
         if (peer_err != ESP_OK) {
             // FIXME: Update to flash one of the LEDs as an error code
-            Serial.println("Error adding peer");
-            return;
+            Serial.print("Error adding peer index: ");
+            Serial.println(i);
+            //return;
         }
     }
 
     // Callback function for requesting the main page of the webserver
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
         request->send(200, "text/html", index_html);
+        //request->send(200, "text/html", "<h1>Hello from ESP32 Async Server!</h1>");
     });
     
     // Start events handler
     server.addHandler(&events);
+    Serial.println("Getting ready to start server");
     server.begin();
+    Serial.println("Server started");
+    //delay(5000);
 
     // Set pin mode for reset pin
+    Serial.println("Prior to Pin Mode");
     pinMode(ZERO_PIN, INPUT); 
-
+    Serial.println("Pin Mode Set Successfully");
     // Create force data queue
     linkAddrsQueue = xQueueCreate(NUM_LINKS, sizeof(uint8_t));
     forceDataQueue = xQueueCreate(NUM_LINKS, sizeof(float));
+    Serial.println("Queues Created Successfully");
+
+    // TEST
+    zeroMsg.zero_signal = false;
+
 }
 
 // Runs continuously after setup() to perform main program functions
 void loop() {
+    Serial.println("Loop");
+
+    /*
     // Check if the zero button was pressed
     if (digitalRead(ZERO_PIN) == HIGH) {
         zeroMsg.zero_signal = HIGH;
-    }
+    }*/
+    
+    // Data Transmission Debug Test
+    zeroMsg.zero_signal = !zeroMsg.zero_signal;
 
-    esp_err_t send_err = esp_now_send(0, (uint8_t *) &zeroMsg, sizeof(zeroMsg));
+    esp_err_t send_err = esp_now_send(linkAddrs[1], (uint8_t *) &zeroMsg, sizeof(zeroMsg));
 
     if (send_err != ESP_OK) {
         // FIXME: Update to flash one of the LEDs as an error code
         Serial.println("Error sending data");
-        return;
+        //return;
     }
 
     // FIFO unload data from the queues for processing and addition to data arrays
@@ -235,5 +266,5 @@ void loop() {
         events.send(jsonArray.c_str(), "update", millis());
   }
 
-    delay(50); // Reduce sample rate and data transmission to conserve battery life
+    delay(500); // Reduce sample rate and data transmission to conserve battery life
 }
