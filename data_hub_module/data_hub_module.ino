@@ -11,7 +11,7 @@ zero_msg zeroMsg;
 const uint8_t NUM_LINKS = 16;
 const uint8_t linkAddrs[NUM_LINKS][6] = { // Add all MAC addresses for the links
     {0x94, 0x54, 0xC5, 0xB0, 0x92, 0x68}, // Link 1
-    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, // Link 2
+    {0x94, 0x54, 0xC5, 0xB6, 0xDD, 0x58}, // Link 2
     {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, // Link 3
     {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, // Link 4
     {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, // Link 5
@@ -52,6 +52,7 @@ const bool ZERO_PIN = 0; // FIXME: Replace with actual pin number
 
 // OnDataSent(): Executes when data is sent
 bool OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+    Serial.println("OnDataSent");
     return status == ESP_NOW_SEND_SUCCESS;
 }
 
@@ -65,9 +66,10 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     xQueueSend(linkAddrsQueue, &mac_addr, 0);
     xQueueSend(forceDataQueue, &forceMsg.force_data, 0);
     */
-
-   memcpy(&forceMsg, incomingData, sizeof(incomingData));
-   Serial.println(forceMsg.force_data);
+    
+    Serial.println("OnDataRecv");
+    memcpy(&forceMsg, incomingData, sizeof(forceMsg));
+    Serial.println(forceMsg.force_data);
 }
 
 // HMTL page Index -> Runs when called by callback function
@@ -189,7 +191,8 @@ void setup() {
 
         if (peer_err != ESP_OK) {
             // FIXME: Update to flash one of the LEDs as an error code
-            Serial.println("Error adding peer");
+            Serial.print("Error adding peer index: ");
+            Serial.println(i);
             //return;
         }
     }
@@ -225,16 +228,16 @@ void setup() {
 void loop() {
     Serial.println("Loop");
 
-    
+    /*
     // Check if the zero button was pressed
     if (digitalRead(ZERO_PIN) == HIGH) {
         zeroMsg.zero_signal = HIGH;
-    }
+    }*/
     
     // Data Transmission Debug Test
     zeroMsg.zero_signal = !zeroMsg.zero_signal;
 
-    esp_err_t send_err = esp_now_send(0, (uint8_t *) &zeroMsg, sizeof(zeroMsg));
+    esp_err_t send_err = esp_now_send(linkAddrs[1], (uint8_t *) &zeroMsg, sizeof(zeroMsg));
 
     if (send_err != ESP_OK) {
         // FIXME: Update to flash one of the LEDs as an error code

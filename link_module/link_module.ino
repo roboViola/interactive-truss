@@ -63,6 +63,7 @@ void SetLightColors(float force) {
 
 // OnDataSent(): Executes when data is sent
 bool OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+    Serial.println("OnDataSent");
     return status == ESP_NOW_SEND_SUCCESS;
 }
 
@@ -74,6 +75,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
         forceSensor.tare();
     }*/
 
+    Serial.println("OnDataRecv");
     memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
     Serial.println(zeroMsg.zero_signal);
 }
@@ -82,6 +84,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
 void setup() {
     // Start Serial
     Serial.begin(115200);
+    delay(2000);
 
     // Set device to be a WiFi Station
     WiFi.mode(WIFI_STA);
@@ -93,6 +96,7 @@ void setup() {
         return;
     }
     
+    Serial.println("Success initializing WiFi Access Point Station");
     // Set callback function of transmitted packet status
     esp_now_register_send_cb(esp_now_send_cb_t(OnDataSent));
 
@@ -112,6 +116,7 @@ void setup() {
         Serial.println("Error adding peer");
         return;
     }
+    Serial.println("Success adding peer");
 
     // Setup HX711 Module
     forceSensor.begin(DAT_PIN, CLK_PIN);
@@ -128,6 +133,7 @@ void setup() {
 
 // Runs continuously after setup() to perform main program functions
 void loop() {
+    Serial.println("Loop");
     // Obtain adjusted force data from the Wheatstone Bridge via the HX711
     if (forceSensor.is_ready()) {
         forceMsg.force_data = forceSensor.get_units(); // Move into structure for transmission
@@ -138,7 +144,7 @@ void loop() {
 
     // Sending errors
     esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));
-
+    Serial.println("Sent Data");
     if (send_err != ESP_NOW_SEND_SUCCESS) {
         // FIXME: Update to flash one of the LEDs as an error code
         Serial.println("Error sending data");
