@@ -141,6 +141,7 @@ void loop() {
         strip.show(); // Push the color data out to the addressible LEDs 
     }
     forceMsg.force_data = forceMsg.force_data + 1;
+    Serial.println(forceMsg.force_data);
 
     // Sending errors
     esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));
