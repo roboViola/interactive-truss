@@ -134,12 +134,16 @@ void setup() {
 // Runs continuously after setup() to perform main program functions
 void loop() {
     Serial.println("Loop");
-    // Obtain adjusted force data from the Wheatstone Bridge via the HX711
+
+    /*
+    // Obtain adjusted force data from the Wheatstone Bridge via the HX711/*
     if (forceSensor.is_ready()) {
         forceMsg.force_data = forceSensor.get_units(); // Move into structure for transmission
         SetLightColors(forceMsg.force_data); // Set LED colors
         strip.show(); // Push the color data out to the addressible LEDs 
     }
+    */
+   
     forceMsg.force_data = forceMsg.force_data + 1;
     Serial.println(forceMsg.force_data);
 
