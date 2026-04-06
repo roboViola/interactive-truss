@@ -58,13 +58,30 @@ bool OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 
 // OnDataRecv(): Executes when data is received
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length) {
+    BaseType_t highPriorityTaskWoken = pdFALSE;
+    
     // Copy received data to data structure
     memcpy(&forceMsg, incomingData, sizeof(forceMsg));
 
+    /*
     // Add received data to data queue for processing in main loop without packet loss
-    xQueueSendFromISR(linkAddrsQueue, mac_addr, 0);
-    xQueueSendFromISR(forceDataQueue, &forceMsg.force_data, 0);
+    if (xQueueSendFromISR(linkAddrsQueue, mac_addr, &highPriorityTaskWoken) != pdPASS)
+    {
+        Serial.println("Error Adding to MAC Address Queue");
+    }
+    */
     
+    if (xQueueSendFromISR(forceDataQueue, &forceMsg.force_data, &highPriorityTaskWoken) != pdPASS)
+    {
+        Serial.println("Error Adding to Force Queue");
+    }
+    /*
+    // Switch to higher priority task
+    if (highPriorityTaskWoken == pdTRUE)
+    {
+        portYIELD_FROM_ISR();
+    }*/
+
     /* Debug Code for Initial Comms Test
     Serial.println("OnDataRecv");
     memcpy(&forceMsg, incomingData, sizeof(forceMsg));
