@@ -73,6 +73,8 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     
     if (xQueueSendFromISR(forceDataQueue, &forceMsg.force_data, &highPriorityTaskWoken) != pdPASS)
     {
+        Serial.println(uxQueueSpacesAvailable(forceDataQueue));
+        Serial.println(forceMsg.force_data);
         Serial.println("Error Adding to Force Queue");
     }
     /*
@@ -263,7 +265,7 @@ void loop() {
     }*/
 
     // FIFO unload data from the queues for processing and addition to data arrays
-    if (xQueueReceive(linkAddrsQueue, &linkAddr, 0) && xQueueReceive(forceDataQueue, &forceData, 0)) {
+    if (/*xQueueReceive(linkAddrsQueue, &linkAddr, 0) &&*/ xQueueReceive(forceDataQueue, &forceData, 0) == pdTRUE) {
         // Look for the link address that sent the data
         Serial.println("Successfully Entered Queue Processing");
         for (uint8_t i = 0; i < sizeof(linkAddrs) / sizeof(linkAddrs[0]); i++) {
