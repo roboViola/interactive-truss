@@ -58,18 +58,18 @@ bool OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 
 // OnDataRecv(): Executes when data is received
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length) {
-    /*
     // Copy received data to data structure
     memcpy(&forceMsg, incomingData, sizeof(forceMsg));
 
     // Add received data to data queue for processing in main loop without packet loss
     xQueueSend(linkAddrsQueue, &mac_addr, 0);
     xQueueSend(forceDataQueue, &forceMsg.force_data, 0);
-    */
     
+    /* Debug Code for Initial Comms Test
     Serial.println("OnDataRecv");
     memcpy(&forceMsg, incomingData, sizeof(forceMsg));
     Serial.println(forceMsg.force_data);
+    */
 }
 
 // HMTL page Index -> Runs when called by callback function
@@ -234,7 +234,7 @@ void loop() {
         zeroMsg.zero_signal = HIGH;
     }*/
     
-    // Data Transmission Debug Test
+    /* // Data Transmission Debug Test
     zeroMsg.zero_signal = !zeroMsg.zero_signal;
 
     esp_err_t send_err = esp_now_send(0, (uint8_t *) &zeroMsg, sizeof(zeroMsg));
@@ -243,15 +243,17 @@ void loop() {
         // FIXME: Update to flash one of the LEDs as an error code
         Serial.println("Error sending data");
         //return;
-    }
+    }*/
 
     // FIFO unload data from the queues for processing and addition to data arrays
     if (xQueueReceive(linkAddrsQueue, &linkAddr, 0) && xQueueReceive(forceDataQueue, &forceData, 0)) {
         // Look for the link address that sent the data
+        Serial.println("Successfully Entered Queue Processing");
         for (uint8_t i = 0; i < sizeof(linkAddrs) / sizeof(linkAddrs[0]); i++) {
             if (memcmp(&linkAddr, linkAddrs[i], 6)) {
                 // Update the force data array element that corresponds to the link address
                 linkForceData[i] = forceData;
+                Serial.println("Successully Identified Module");
             }
         }
     }
