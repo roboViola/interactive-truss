@@ -147,7 +147,7 @@ void loop() {
     forceMsg.force_data = forceMsg.force_data + 1;
     Serial.println(forceMsg.force_data);
 
-    esp_now_send(hubAddr, (uint8_t *) "true", sizeof("true"));
+    //esp_now_send(hubAddr, (uint8_t *) "true", sizeof("true"));
     
     // Sending errors
     esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));
@@ -158,5 +158,5 @@ void loop() {
         Serial.println("Error sending data");
     }
 
-    delay(150); // Reduce sample rate and data transmission to conserve battery life
+    delay(250); // Reduce sample rate and data transmission to conserve battery life
 }
