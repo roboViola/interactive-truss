@@ -254,6 +254,8 @@ void loop() {
                 // Update the force data array element that corresponds to the link address
                 linkForceData[i] = forceData;
                 Serial.println("Successully Identified Module");
+                Serial.println(linkForceData[i]);
+                Serial.println(linkAddr);
             }
         }
     }
