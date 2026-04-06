@@ -62,7 +62,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     memcpy(&forceMsg, incomingData, sizeof(forceMsg));
 
     // Add received data to data queue for processing in main loop without packet loss
-    xQueueSend(linkAddrsQueue, &mac_addr, 0);
+    xQueueSend(linkAddrsQueue, mac_addr, 0);
     xQueueSend(forceDataQueue, &forceMsg.force_data, 0);
     
     /* Debug Code for Initial Comms Test
@@ -215,7 +215,7 @@ void setup() {
     pinMode(ZERO_PIN, INPUT); 
     Serial.println("Pin Mode Set Successfully");
     // Create force data queue
-    linkAddrsQueue = xQueueCreate(NUM_LINKS, sizeof(uint8_t));
+    linkAddrsQueue = xQueueCreate(NUM_LINKS, 6);
     forceDataQueue = xQueueCreate(NUM_LINKS, sizeof(float));
     Serial.println("Queues Created Successfully");
 
@@ -256,6 +256,25 @@ void loop() {
                 Serial.println("Successully Identified Module");
                 Serial.println(linkForceData[i]);
                 Serial.println(linkAddr);
+                /*
+                for (int j = 0; j < 6; j++) {
+                    Serial.printf("%02X", linkAddr[j]);
+
+                    if (j < 5) {
+                        Serial.print(":");
+                    }
+                }
+                Serial.println();*/
+                // Serial.println(linkAddr);
+                for (int j = 0; j < 6; j++) {
+                    Serial.printf("%02X", linkAddrs[i][j]);
+
+                    if (j < 5) {
+                        Serial.print(":");
+                    }
+                }
+                Serial.println();
+                // Serial.println(linkAddrs[i]);
             }
         }
     }
