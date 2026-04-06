@@ -62,8 +62,8 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     memcpy(&forceMsg, incomingData, sizeof(forceMsg));
 
     // Add received data to data queue for processing in main loop without packet loss
-    xQueueSend(linkAddrsQueue, mac_addr, 0);
-    xQueueSend(forceDataQueue, &forceMsg.force_data, 0);
+    xQueueSendFromISR(linkAddrsQueue, mac_addr, 0);
+    xQueueSendFromISR(forceDataQueue, &forceMsg.force_data, 0);
     
     /* Debug Code for Initial Comms Test
     Serial.println("OnDataRecv");
