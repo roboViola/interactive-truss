@@ -237,7 +237,7 @@ void loop() {
     // Data Transmission Debug Test
     zeroMsg.zero_signal = !zeroMsg.zero_signal;
 
-    esp_err_t send_err = esp_now_send(linkAddrs[1], (uint8_t *) &zeroMsg, sizeof(zeroMsg));
+    esp_err_t send_err = esp_now_send(0, (uint8_t *) &zeroMsg, sizeof(zeroMsg));
 
     if (send_err != ESP_OK) {
         // FIXME: Update to flash one of the LEDs as an error code
