@@ -35,7 +35,6 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.STA.begin();
 
-  // Obtain the MAC address
   getMacAddress();
 }
 

@@ -62,6 +62,13 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     
     // Copy received data to data structure
     memcpy(&forceMsg, incomingData, sizeof(forceMsg));
+    Serial.println("MAC Addr Recv'd");
+    Serial.printf("%02X", mac_addr[0]);
+    Serial.printf("%02X", mac_addr[1]);
+    Serial.printf("%02X", mac_addr[2]);
+    Serial.printf("%02X", mac_addr[3]);
+    Serial.printf("%02X", mac_addr[4]);
+    Serial.printf("%02X", mac_addr[5]);
 
     /*
     // Add received data to data queue for processing in main loop without packet loss
@@ -246,7 +253,7 @@ void setup() {
 // Runs continuously after setup() to perform main program functions
 void loop() {
     Serial.println("Loop");
-
+    //Serial.println(linkAddrs[0][0]);
     /*
     // Check if the zero button was pressed
     if (digitalRead(ZERO_PIN) == HIGH) {
@@ -272,9 +279,9 @@ void loop() {
             if (memcmp(&linkAddr, linkAddrs[i], 6)) {
                 // Update the force data array element that corresponds to the link address
                 linkForceData[i] = forceData;
-                Serial.println("Successully Identified Module");
-                Serial.println(linkForceData[i]);
-                Serial.println(linkAddr);
+                //Serial.println("Successully Identified Module");
+                //Serial.println(linkForceData[i]);
+                //Serial.println(linkAddrs[i]);
                 /*
                 for (int j = 0; j < 6; j++) {
                     Serial.printf("%02X", linkAddr[j]);
