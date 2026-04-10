@@ -11,6 +11,7 @@ enum class MessageType : uint8_t {
 // Structure for Sensor Data
 struct sense_msg {
     MessageType msg_type = MessageType::MSG_DATA;
+    uint8_t id;
     float force_data;
 };
 
