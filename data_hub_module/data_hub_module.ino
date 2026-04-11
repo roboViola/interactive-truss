@@ -116,15 +116,16 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
                 pairMsg.id = next_pair_id; // Set ID number to assign link module with
                 next_pair_id++;
                 Serial.println("Recieved Message from Peer");
-                Serial.println(mac_addr[0]);
-                Serial.println(mac_addr[1]);
-                Serial.println(mac_addr[2]);
-                Serial.println(mac_addr[3]);
-                Serial.println(mac_addr[4]);
-                Serial.println(mac_addr[5]);
+                Serial.println(pairMsg.mac_addr[0]);
+                Serial.println(pairMsg.mac_addr[1]);
+                Serial.println(pairMsg.mac_addr[2]);
+                Serial.println(pairMsg.mac_addr[3]);
+                Serial.println(pairMsg.mac_addr[4]);
+                Serial.println(pairMsg.mac_addr[5]);
 
-                esp_err_t result = esp_now_send(mac_addr, (uint8_t *) &pairMsg, sizeof(pairMsg));
                 addPeer(pairMsg.mac_addr);
+                esp_err_t result = esp_now_send(pairMsg.mac_addr, (uint8_t *) &pairMsg, sizeof(pairMsg));
+                
             }
         }
         break; 
