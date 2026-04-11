@@ -55,7 +55,7 @@ const bool ZERO_PIN = 0; // FIXME: Replace with actual pin number
 
 // OnDataSent(): Executes when data is sent
 bool OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
-    Serial.println("OnDataSent");
+    //Serial.println("OnDataSent");
     return status == ESP_NOW_SEND_SUCCESS;
 }
 
@@ -92,6 +92,9 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
 
     uint8_t mac_addr_pair[6];
 
+    Serial.println("Entered OnDataRecv");
+    Serial.println(static_cast<int>(incomingData[0]));
+
     switch (incomingData[0]) {
     case static_cast<int>(MessageType::MSG_DATA):
         // Copy received data to data structure
@@ -109,6 +112,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
                 WiFi.softAPmacAddress(pairMsg.mac_addr);
                 pairMsg.id = next_pair_id; // Set ID number to assign link module with
                 next_pair_id++;
+                Serial.println("Recieved Message from Peer");
 
                 esp_err_t result = esp_now_send(pairMsg.mac_addr, (uint8_t *) &pairMsg, sizeof(pairMsg));
                 addPeer(pairMsg.mac_addr);
@@ -119,11 +123,12 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
 }
 
 bool addPeer(const uint8_t *peer_addr) {      // add pairing
+  Serial.println("Entered addPeer");
   memset(&peerInfo, 0, sizeof(peerInfo));
   const esp_now_peer_info_t *peer = &peerInfo;
   memcpy(peerInfo.peer_addr, peer_addr, 6);
   
-  peerInfo.channel = 0; // pick a channel
+  peerInfo.channel = 1; // pick a channel
   peerInfo.encrypt = 0; // no encryption
   // check if the peer exists
   bool exists = esp_now_is_peer_exist(peerInfo.peer_addr);
@@ -240,8 +245,8 @@ void setup() {
 
     //WiFi.begin(ssid, password);
     //delay(5000);
-    Serial.print("Setting AP (Access Point)…");
-    Serial.println(WiFi.softAPIP());
+    //Serial.print("Setting AP (Access Point)…");
+    //Serial.println(WiFi.softAPIP());
 
     if (init_err != ESP_OK) {
         // FIXME: Update to flash one of the LEDs as an error code
@@ -305,7 +310,7 @@ void setup() {
 
 // Runs continuously after setup() to perform main program functions
 void loop() {
-    Serial.println("Loop");
+    //Serial.println("Loop");
 
     /*
     // Check if the zero button was pressed

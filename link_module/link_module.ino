@@ -26,7 +26,7 @@ pair_msg pairMsg;
 //const uint8_t hubAddr[6] = {0x94, 0x54, 0xC5, 0xB6, 0xE0, 0x88}; // Replace with Hub Module Address
 uint8_t hubAddr[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 uint8_t defaultId = 99; // Default ID value that represents unassigned ID
-const uint8_t chan = 0; // All devices will be set to the same channel, so no need to parse
+const uint8_t chan = 1; // All devices will be set to the same channel, so no need to parse
 esp_now_peer_info_t peerInfo;
 
 // Define HX711 Module
@@ -105,7 +105,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
 }
 
 void addPeer(const uint8_t * mac_addr, uint8_t chan){
-  ESP_ERROR_CHECK(esp_wifi_set_channel(chan ,WIFI_SECOND_CHAN_NONE));
+  ESP_ERROR_CHECK(esp_wifi_set_channel(chan, WIFI_SECOND_CHAN_NONE));
   esp_now_del_peer(mac_addr);
   memset(&peerInfo, 0, sizeof(esp_now_peer_info_t));
   peerInfo.channel = chan;
