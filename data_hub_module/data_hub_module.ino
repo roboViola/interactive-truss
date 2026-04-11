@@ -100,6 +100,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
         // Copy received data to data structure
         memcpy(&forceMsg, incomingData, sizeof(forceMsg));
         linkForceData[forceMsg.id] = forceMsg.force_data;
+        Serial.println(forceMsg.force_data);
         break;
 
     case static_cast<int>(MessageType::MSG_PAIR_SN):

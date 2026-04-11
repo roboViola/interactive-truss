@@ -89,9 +89,10 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     switch (incomingData[0]) {
     case static_cast<int>(MessageType::MSG_RESET) :      // we received data from server
         memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
-        if (zeroMsg.zero_signal == true) {
+        /*if (zeroMsg.zero_signal == true) {
             forceSensor.tare();
-        }
+        }*/
+        //Serial.println(zeroMsg.zero_signal);
         break;
 
     case static_cast<int>(MessageType::MSG_PAIR_SV):    // we received pairing data from server
@@ -196,7 +197,8 @@ void loop() {
     */
 
     forceMsg.force_data = forceMsg.force_data + 1;
-    Serial.println(forceMsg.force_data);
+    //Serial.println(forceMsg.force_data);
+    Serial.println(zeroMsg.zero_signal);
 
     //esp_now_send(hubAddr, (uint8_t *) "true", sizeof("true"));
     
