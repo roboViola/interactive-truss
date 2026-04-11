@@ -24,7 +24,7 @@ pair_msg pairMsg;
 
 // Define variables for data transmission
 //const uint8_t hubAddr[6] = {0x94, 0x54, 0xC5, 0xB6, 0xE0, 0x88}; // Replace with Hub Module Address
-uint8_t hubAddr[6];
+uint8_t hubAddr[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 uint8_t defaultId = 99; // Default ID value that represents unassigned ID
 const uint8_t chan = 0; // All devices will be set to the same channel, so no need to parse
 esp_now_peer_info_t peerInfo;
@@ -181,20 +181,21 @@ void loop() {
         strip.show(); // Push the color data out to the addressible LEDs 
     }
     */
-   
+
     forceMsg.force_data = forceMsg.force_data + 1;
     Serial.println(forceMsg.force_data);
 
     //esp_now_send(hubAddr, (uint8_t *) "true", sizeof("true"));
     
-    // Sending errors
+    /*// Sending errors
     esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));
     Serial.println("Sent Data");
     
     if (send_err != ESP_NOW_SEND_SUCCESS) {
         // FIXME: Update to flash one of the LEDs as an error code
         Serial.println("Error sending data");
-    }
+    }*/
+    esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &pairMsg, sizeof(pairMsg));
 
     delay(250); // Reduce sample rate and data transmission to conserve battery life
 }
