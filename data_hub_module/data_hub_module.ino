@@ -6,10 +6,11 @@
 // Define structures used for data transmission
 sense_msg forceMsg;
 zero_msg zeroMsg;
+pair_msg pairMsg;
 
 // Define variables for data transmission
 const uint8_t NUM_LINKS = 16;
-const uint8_t linkAddrs[NUM_LINKS][6] = { // Add all MAC addresses for the links
+/*const uint8_t linkAddrs[NUM_LINKS][6] = { // Add all MAC addresses for the links
     {0x94, 0x54, 0xC5, 0xB0, 0x92, 0x68}, // Link 1
     {0x94, 0x54, 0xC5, 0xB6, 0xDD, 0x58}, // Link 2
     {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, // Link 3
@@ -26,8 +27,9 @@ const uint8_t linkAddrs[NUM_LINKS][6] = { // Add all MAC addresses for the links
     {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, // Link 14
     {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, // Link 15
     {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF} // Link 16
-};
-float linkForceData[NUM_LINKS]; // Array for all the force data, index maps with linkAddrs
+};*/
+float linkForceData[NUM_LINKS]; // Array for all the force data
+uint8_t next_pair_id = 1; // Next ID number to be given to a peer
 esp_now_peer_info_t peerInfo;
 
 // Define SSID and password for access-point station
@@ -39,13 +41,14 @@ AsyncWebServer server(80); // Use HTTP port 80
 AsyncEventSource events("/events"); // Live updates to webpage viewed on phone or laptop
 unsigned long lastEventTime = 0;
 
+/* No longer needed
 // Initialize data queues
 QueueHandle_t linkAddrsQueue; // Queue for the received link MAC addresses
 QueueHandle_t forceDataQueue; // Queue for the received force data
 
 // Define queue variables for loop processing
 uint8_t linkAddr;
-float forceData;
+float forceData; */
 
 // Define reset pin
 const bool ZERO_PIN = 0; // FIXME: Replace with actual pin number
@@ -58,18 +61,15 @@ bool OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 
 // OnDataRecv(): Executes when data is received
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length) {
+    /* No queue needed when receiving board id
     BaseType_t highPriorityTaskWoken = pdFALSE;
-    
-    // Copy received data to data structure
-    memcpy(&forceMsg, incomingData, sizeof(forceMsg));
 
-    /*
     // Add received data to data queue for processing in main loop without packet loss
     if (xQueueSendFromISR(linkAddrsQueue, mac_addr, &highPriorityTaskWoken) != pdPASS)
     {
         Serial.println("Error Adding to MAC Address Queue");
     }
-    */
+    
     
     if (xQueueSendFromISR(forceDataQueue, &forceMsg.force_data, &highPriorityTaskWoken) != pdPASS)
     {
@@ -77,7 +77,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
         Serial.println(forceMsg.force_data);
         Serial.println("Error Adding to Force Queue");
     }
-    /*
+
     // Switch to higher priority task
     if (highPriorityTaskWoken == pdTRUE)
     {
@@ -89,7 +89,62 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     memcpy(&forceMsg, incomingData, sizeof(forceMsg));
     Serial.println(forceMsg.force_data);
     */
+
+    uint8_t mac_addr_pair[6];
+
+    switch (incomingData[0]) {
+    case static_cast<int>(MessageType::MSG_DATA):
+        // Copy received data to data structure
+        memcpy(&forceMsg, incomingData, sizeof(forceMsg));
+        linkForceData[forceMsg.id] = forceMsg.force_data;
+
+    case static_cast<int>(MessageType::MSG_PAIR):
+        // Copy received data to data structure
+        memcpy(&pairMsg, incomingData, sizeof(pairMsg));
+
+        if (pairMsg.id > 0) {     // do not replay to server itself
+            if (pairMsg.msg_type == MessageType::MSG_PAIR) { 
+                // Server is in AP_STA mode: peers need to send data to server soft AP MAC address 
+                WiFi.softAPmacAddress(pairMsg.mac_addr);
+                pairMsg.id = next_pair_id; // Set ID number to assign link module with
+                next_pair_id++;
+
+                esp_err_t result = esp_now_send(pairMsg.mac_addr, (uint8_t *) &pairMsg, sizeof(pairMsg));
+                addPeer(pairMsg.mac_addr);
+            }
+        }
+    break; 
+    }    
 }
+
+bool addPeer(const uint8_t *peer_addr) {      // add pairing
+  memset(&peerInfo, 0, sizeof(peerInfo));
+  const esp_now_peer_info_t *peer = &peerInfo;
+  memcpy(peerInfo.peer_addr, peer_addr, 6);
+  
+  peerInfo.channel = 0; // pick a channel
+  peerInfo.encrypt = 0; // no encryption
+  // check if the peer exists
+  bool exists = esp_now_is_peer_exist(peerInfo.peer_addr);
+  if (exists) {
+    // Slave already paired.
+    Serial.println("Already Paired");
+    return true;
+  }
+  else {
+    esp_err_t addStatus = esp_now_add_peer(peer);
+    if (addStatus == ESP_OK) {
+      // Pair success
+      Serial.println("Pair success");
+      return true;
+    }
+    else 
+    {
+      Serial.println("Pair failed");
+      return false;
+    }
+  }
+} 
 
 // HMTL page Index -> Runs when called by callback function
 /* Convert float array to JSON */
@@ -199,6 +254,7 @@ void setup() {
     // Set callback function of received packed status
     esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv));
 
+    /* Archive
     // Set peer information
     for (uint8_t i = 0; i < sizeof(linkAddrs) / sizeof(linkAddrs[0]); i++) {
         memcpy(peerInfo.peer_addr, linkAddrs[i], sizeof(linkAddrs[i]));
@@ -215,6 +271,7 @@ void setup() {
             //return;
         }
     }
+    */
 
     // Callback function for requesting the main page of the webserver
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -233,9 +290,11 @@ void setup() {
     Serial.println("Prior to Pin Mode");
     pinMode(ZERO_PIN, INPUT); 
     Serial.println("Pin Mode Set Successfully");
+    /*
     // Create force data queue
     linkAddrsQueue = xQueueCreate(NUM_LINKS, 6);
     forceDataQueue = xQueueCreate(NUM_LINKS, sizeof(float));
+    */
     Serial.println("Queues Created Successfully");
 
     // TEST
@@ -264,8 +323,9 @@ void loop() {
         //return;
     }*/
 
+    /*
     // FIFO unload data from the queues for processing and addition to data arrays
-    if (/*xQueueReceive(linkAddrsQueue, &linkAddr, 0) &&*/ xQueueReceive(forceDataQueue, &forceData, 0) == pdTRUE) {
+    if (xQueueReceive(linkAddrsQueue, &linkAddr, 0) && xQueueReceive(forceDataQueue, &forceData, 0) == pdTRUE) {
         // Look for the link address that sent the data
         Serial.println("Successfully Entered Queue Processing");
         for (uint8_t i = 0; i < sizeof(linkAddrs) / sizeof(linkAddrs[0]); i++) {
@@ -283,7 +343,7 @@ void loop() {
                         Serial.print(":");
                     }
                 }
-                Serial.println();*/
+                Serial.println();
                 // Serial.println(linkAddr);
                 for (int j = 0; j < 6; j++) {
                     Serial.printf("%02X", linkAddrs[i][j]);
@@ -297,6 +357,7 @@ void loop() {
             }
         }
     }
+    */
 
     // Update table data every 400 ms
     if(millis() - lastEventTime >= 400) {
