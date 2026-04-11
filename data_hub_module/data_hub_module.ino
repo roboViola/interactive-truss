@@ -1,4 +1,5 @@
 #include <esp_now.h>
+#include <esp_wifi.h>
 #include <WiFi.h>
 #include "ESPAsyncWebServer.h"
 #include "../libraries/message_types.h"
@@ -126,8 +127,9 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
 
                 addPeer(pairMsg.mac_addr);
                 pairMsg.msg_type = MessageType::MSG_PAIR_SV;
-                esp_err_t result = esp_now_send(pairMsg.mac_addr, (uint8_t *) &pairMsg, sizeof(pairMsg));
-                
+                esp_wifi_get_mac(WIFI_IF_STA, pairMsg.mac_addr);
+                esp_err_t result = esp_now_send(peerInfo.peer_addr, (uint8_t *) &pairMsg, sizeof(pairMsg));
+                Serial.println("Response Send");
             }
         }
         break; 
@@ -260,6 +262,7 @@ void setup() {
     //Serial.print("Setting AP (Access Point)…");
     //Serial.println(WiFi.softAPIP());
 
+    Serial.println("Start of Setup");
     if (init_err != ESP_OK) {
         // FIXME: Update to flash one of the LEDs as an error code
         Serial.println("Error initializing WiFi Access Point Station");
@@ -322,7 +325,7 @@ void setup() {
 
 // Runs continuously after setup() to perform main program functions
 void loop() {
-    //Serial.println("Loop");
+    Serial.println("Loop");
 
     /*
     // Check if the zero button was pressed
