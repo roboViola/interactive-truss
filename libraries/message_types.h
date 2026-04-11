@@ -25,7 +25,7 @@ struct zero_msg {
 struct pair_msg {
     MessageType msg_type = MessageType::MSG_PAIR;
     uint8_t id;
-    uint8_t mac_addr;
+    uint8_t mac_addr[6];
 };
 
 #endif
