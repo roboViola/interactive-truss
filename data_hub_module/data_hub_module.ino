@@ -97,6 +97,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
         // Copy received data to data structure
         memcpy(&forceMsg, incomingData, sizeof(forceMsg));
         linkForceData[forceMsg.id] = forceMsg.force_data;
+        break;
 
     case static_cast<int>(MessageType::MSG_PAIR):
         // Copy received data to data structure
@@ -113,7 +114,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
                 addPeer(pairMsg.mac_addr);
             }
         }
-    break; 
+        break; 
     }    
 }
 
