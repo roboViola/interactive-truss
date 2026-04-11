@@ -208,9 +208,11 @@ void loop() {
         // FIXME: Update to flash one of the LEDs as an error code
         Serial.println("Error sending data");
     }*/
-    pairMsg.msg_type = MessageType::MSG_PAIR_SN;
-    esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &pairMsg, sizeof(pairMsg));
-    Serial.println(defaultId);
+    if (defaultId == 99) {
+        pairMsg.msg_type = MessageType::MSG_PAIR_SN;
+        esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &pairMsg, sizeof(pairMsg));
+        Serial.println(defaultId);
+    }
 
     delay(250); // Reduce sample rate and data transmission to conserve battery life
 }
