@@ -83,7 +83,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     Serial.println("OnDataRecv");
     memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
     Serial.println(zeroMsg.zero_signal); */
-
+    Serial.println("Received Data");
     uint8_t mac_addr_pair[6];
 
     switch (incomingData[0]) {
@@ -95,6 +95,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
         break;
 
     case static_cast<int>(MessageType::MSG_PAIR):    // we received pairing data from server
+        Serial.println("Received Pair Response");
         memcpy(&pairMsg, incomingData, sizeof(pairMsg));
         if (pairMsg.id > 0) {              // the message comes from server
             addPeer(pairMsg.mac_addr, chan); // add the server  to the peer list 
@@ -126,6 +127,7 @@ void setup() {
     
     // Set device to be a WiFi Station
     WiFi.mode(WIFI_STA);
+    esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);
     esp_err_t init_err = esp_now_init();
 
     if (init_err != ESP_OK) {
@@ -142,10 +144,17 @@ void setup() {
     esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv));
 
     // Set peer information
-    /*
     memcpy(peerInfo.peer_addr, hubAddr, sizeof(hubAddr));
     peerInfo.channel = chan;
-    peerInfo.encrypt = false;*/
+    peerInfo.encrypt = false;
+
+    esp_wifi_get_mac(WIFI_IF_STA, pairMsg.mac_addr);
+    Serial.println(pairMsg.mac_addr[0]);
+    Serial.println(pairMsg.mac_addr[1]);
+    Serial.println(pairMsg.mac_addr[2]);
+    Serial.println(pairMsg.mac_addr[3]);
+    Serial.println(pairMsg.mac_addr[4]);
+    Serial.println(pairMsg.mac_addr[5]);
 
     pairMsg.id = defaultId;
 
@@ -175,7 +184,7 @@ void setup() {
 // Runs continuously after setup() to perform main program functions
 void loop() {
     Serial.println("Loop");
-
+    
     /*
     // Obtain adjusted force data from the Wheatstone Bridge via the HX711/*
     if (forceSensor.is_ready()) {

@@ -112,12 +112,18 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
             Serial.println("ID > 0");
             if (pairMsg.msg_type == MessageType::MSG_PAIR) { 
                 // Server is in AP_STA mode: peers need to send data to server soft AP MAC address 
-                WiFi.softAPmacAddress(pairMsg.mac_addr);
+                //WiFi.softAPmacAddress(pairMsg.mac_addr);
                 pairMsg.id = next_pair_id; // Set ID number to assign link module with
                 next_pair_id++;
                 Serial.println("Recieved Message from Peer");
+                Serial.println(mac_addr[0]);
+                Serial.println(mac_addr[1]);
+                Serial.println(mac_addr[2]);
+                Serial.println(mac_addr[3]);
+                Serial.println(mac_addr[4]);
+                Serial.println(mac_addr[5]);
 
-                esp_err_t result = esp_now_send(pairMsg.mac_addr, (uint8_t *) &pairMsg, sizeof(pairMsg));
+                esp_err_t result = esp_now_send(mac_addr, (uint8_t *) &pairMsg, sizeof(pairMsg));
                 addPeer(pairMsg.mac_addr);
             }
         }
