@@ -199,6 +199,7 @@ void loop() {
     forceMsg.force_data = forceMsg.force_data + 1;
     //Serial.println(forceMsg.force_data);
     Serial.println(zeroMsg.zero_signal);
+    Serial.println(defaultId);
 
     //esp_now_send(hubAddr, (uint8_t *) "true", sizeof("true"));
     
@@ -216,6 +217,8 @@ void loop() {
         Serial.println(defaultId);
     }
     else {
+        forceMsg.id = defaultId;
+        Serial.println(pairMsg.id);
         esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));
         Serial.println("Sent Force Data");
     }

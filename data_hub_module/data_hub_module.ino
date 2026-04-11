@@ -32,6 +32,7 @@ const uint8_t NUM_LINKS = 16;
 float linkForceData[NUM_LINKS]; // Array for all the force data
 uint8_t next_pair_id = 1; // Next ID number to be given to a peer
 esp_now_peer_info_t peerInfo;
+bool data_recv;
 
 // Define SSID and password for access-point station
 const char* ssid = "StationDemo";
@@ -100,8 +101,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     case static_cast<int>(MessageType::MSG_DATA):
         // Copy received data to data structure
         memcpy(&forceMsg, incomingData, sizeof(forceMsg));
-        linkForceData[forceMsg.id] = forceMsg.force_data;
-        Serial.println(forceMsg.force_data);
+        data_recv = true;
         break;
 
     case static_cast<int>(MessageType::MSG_PAIR_SN):
@@ -320,6 +320,11 @@ void setup() {
 
     // TEST
     zeroMsg.zero_signal = false;
+    data_recv = false;
+
+    /*for (uint8_t i = 0; i < NUM_LINKS; i++) {
+        linkForceData[i] = 0
+    } */
 
 }
 
@@ -384,6 +389,17 @@ void loop() {
     zeroMsg.zero_signal = !zeroMsg.zero_signal;
 
     esp_err_t send_err = esp_now_send(0, (uint8_t *) &zeroMsg, sizeof(zeroMsg));
+
+    if (data_recv) {
+        linkForceData[forceMsg.id - 1] = forceMsg.force_data;
+        Serial.println(forceMsg.id);
+        Serial.println(linkForceData[forceMsg.id - 1]);
+        data_recv = false;
+    }
+
+    for (uint8_t i = 0; i < NUM_LINKS; i++) {
+        Serial.println(linkForceData[i]);
+    }
 
     // Update table data every 400 ms
     if(millis() - lastEventTime >= 400) {
