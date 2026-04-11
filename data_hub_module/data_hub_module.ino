@@ -102,7 +102,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
         linkForceData[forceMsg.id] = forceMsg.force_data;
         break;
 
-    case static_cast<int>(MessageType::MSG_PAIR):
+    case static_cast<int>(MessageType::MSG_PAIR_SN):
         Serial.println("Entered Pair Processing");
         // Copy received data to data structure
         memcpy(&pairMsg, incomingData, sizeof(pairMsg));
@@ -110,7 +110,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
 
         if (pairMsg.id > 0) {     // do not replay to server itself
             Serial.println("ID > 0");
-            if (pairMsg.msg_type == MessageType::MSG_PAIR) { 
+            if (pairMsg.msg_type == MessageType::MSG_PAIR_SN) { 
                 // Server is in AP_STA mode: peers need to send data to server soft AP MAC address 
                 //WiFi.softAPmacAddress(pairMsg.mac_addr);
                 pairMsg.id = next_pair_id; // Set ID number to assign link module with
@@ -124,6 +124,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
                 Serial.println(pairMsg.mac_addr[5]);
 
                 addPeer(pairMsg.mac_addr);
+                pairMsg.msg_type = MessageType::MSG_PAIR_SV;
                 esp_err_t result = esp_now_send(pairMsg.mac_addr, (uint8_t *) &pairMsg, sizeof(pairMsg));
                 
             }

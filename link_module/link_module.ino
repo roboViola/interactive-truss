@@ -94,13 +94,14 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
         }
         break;
 
-    case static_cast<int>(MessageType::MSG_PAIR):    // we received pairing data from server
+    case static_cast<int>(MessageType::MSG_PAIR_SV):    // we received pairing data from server
         Serial.println("Received Pair Response");
         memcpy(&pairMsg, incomingData, sizeof(pairMsg));
         if (pairMsg.id > 0) {              // the message comes from server
             addPeer(pairMsg.mac_addr, chan); // add the server  to the peer list 
             defaultId = pairMsg.id; // set the ID number of the link
         }
+        //Serial.println(defaultId);
         break;
   }  
 }
@@ -207,6 +208,7 @@ void loop() {
         // FIXME: Update to flash one of the LEDs as an error code
         Serial.println("Error sending data");
     }*/
+    pairMsg.msg_type = MessageType::MSG_PAIR_SN;
     esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &pairMsg, sizeof(pairMsg));
     Serial.println(defaultId);
 
