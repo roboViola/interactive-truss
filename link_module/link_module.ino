@@ -1,4 +1,5 @@
 #include <esp_now.h>
+#include <esp_wifi.h>
 #include <WiFi.h>
 #include <Adafruit_NeoPixel.h>
 #include "HX711.h"
@@ -19,9 +20,13 @@ uint32_t BLUE = strip.Color(0, 0, 255); // Tension (+)
 // Define structures used for data transmission
 sense_msg forceMsg;
 zero_msg zeroMsg;
+pair_msg pairMsg;
 
 // Define variables for data transmission
-const uint8_t hubAddr[6] = {0x94, 0x54, 0xC5, 0xB6, 0xE0, 0x88}; // Replace with Hub Module Address
+//const uint8_t hubAddr[6] = {0x94, 0x54, 0xC5, 0xB6, 0xE0, 0x88}; // Replace with Hub Module Address
+uint8_t hubAddr[6];
+uint8_t defaultId = 99; // Default ID value that represents unassigned ID
+const uint8_t chan = 0; // All devices will be set to the same channel, so no need to parse
 esp_now_peer_info_t peerInfo;
 
 // Define HX711 Module
@@ -73,11 +78,44 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
 
     if (zeroMsg.zero_signal == true) {
         forceSensor.tare();
-    }*/
+    }
 
     Serial.println("OnDataRecv");
     memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
-    Serial.println(zeroMsg.zero_signal);
+    Serial.println(zeroMsg.zero_signal); */
+
+    uint8_t mac_addr_pair[6];
+
+    switch (incomingData[0]) {
+    case static_cast<int>(MessageType::MSG_RESET) :      // we received data from server
+        memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
+        if (zeroMsg.zero_signal == true) {
+            forceSensor.tare();
+        }
+        break;
+
+    case static_cast<int>(MessageType::MSG_PAIR):    // we received pairing data from server
+        memcpy(&pairMsg, incomingData, sizeof(pairMsg));
+        if (pairMsg.id > 0) {              // the message comes from server
+            addPeer(pairMsg.mac_addr, chan); // add the server  to the peer list 
+            defaultId = pairMsg.id; // set the ID number of the link
+        }
+        break;
+  }  
+}
+
+void addPeer(const uint8_t * mac_addr, uint8_t chan){
+  ESP_ERROR_CHECK(esp_wifi_set_channel(chan ,WIFI_SECOND_CHAN_NONE));
+  esp_now_del_peer(mac_addr);
+  memset(&peerInfo, 0, sizeof(esp_now_peer_info_t));
+  peerInfo.channel = chan;
+  peerInfo.encrypt = false;
+  memcpy(peerInfo.peer_addr, mac_addr, sizeof(uint8_t[6]));
+  if (esp_now_add_peer(&peerInfo) != ESP_OK){
+    Serial.println("Failed to add peer");
+    return;
+  }
+  memcpy(hubAddr, mac_addr, sizeof(uint8_t[6]));
 }
 
 // Runs once at startup to initialize program values and settings
@@ -105,7 +143,7 @@ void setup() {
 
     // Set peer information
     memcpy(peerInfo.peer_addr, hubAddr, sizeof(hubAddr));
-    peerInfo.channel = 0;
+    peerInfo.channel = chan;
     peerInfo.encrypt = false;
 
     // Add peer and check for errors 
