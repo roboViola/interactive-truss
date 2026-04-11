@@ -213,6 +213,10 @@ void loop() {
         esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &pairMsg, sizeof(pairMsg));
         Serial.println(defaultId);
     }
+    else {
+        esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));
+        Serial.println("Sent Force Data");
+    }
 
     delay(250); // Reduce sample rate and data transmission to conserve battery life
 }

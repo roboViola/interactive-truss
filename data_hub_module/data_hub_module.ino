@@ -376,6 +376,11 @@ void loop() {
     }
     */
 
+    // Data Transmission Debug Test
+    zeroMsg.zero_signal = !zeroMsg.zero_signal;
+
+    esp_err_t send_err = esp_now_send(0, (uint8_t *) &zeroMsg, sizeof(zeroMsg));
+
     // Update table data every 400 ms
     if(millis() - lastEventTime >= 400) {
         lastEventTime = millis();
