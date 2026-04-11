@@ -93,7 +93,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     uint8_t mac_addr_pair[6];
 
     Serial.println("Entered OnDataRecv");
-    Serial.println(static_cast<int>(incomingData[0]));
+    //Serial.println(static_cast<int>(incomingData[0]));
 
     switch (incomingData[0]) {
     case static_cast<int>(MessageType::MSG_DATA):
@@ -103,10 +103,13 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
         break;
 
     case static_cast<int>(MessageType::MSG_PAIR):
+        Serial.println("Entered Pair Processing");
         // Copy received data to data structure
         memcpy(&pairMsg, incomingData, sizeof(pairMsg));
+        Serial.println(pairMsg.id);
 
         if (pairMsg.id > 0) {     // do not replay to server itself
+            Serial.println("ID > 0");
             if (pairMsg.msg_type == MessageType::MSG_PAIR) { 
                 // Server is in AP_STA mode: peers need to send data to server soft AP MAC address 
                 WiFi.softAPmacAddress(pairMsg.mac_addr);

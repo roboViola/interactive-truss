@@ -142,9 +142,12 @@ void setup() {
     esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv));
 
     // Set peer information
+    /*
     memcpy(peerInfo.peer_addr, hubAddr, sizeof(hubAddr));
     peerInfo.channel = chan;
-    peerInfo.encrypt = false;
+    peerInfo.encrypt = false;*/
+
+    pairMsg.id = defaultId;
 
     // Add peer and check for errors 
     esp_err_t peer_err = esp_now_add_peer(&peerInfo);
