@@ -218,7 +218,7 @@ void loop() {
     }
     else {
         forceMsg.id = defaultId;
-        Serial.println(pairMsg.id);
+        Serial.println(forceMsg.id);
         esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));
         Serial.println("Sent Force Data");
     }

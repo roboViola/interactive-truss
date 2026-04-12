@@ -5,7 +5,6 @@
 #include "../libraries/message_types.h"
 
 // Define structures used for data transmission
-sense_msg forceMsg;
 zero_msg zeroMsg;
 pair_msg pairMsg;
 
@@ -92,6 +91,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     Serial.println(forceMsg.force_data);
     */
 
+    sense_msg forceMsg;
     uint8_t mac_addr_pair[6];
 
     Serial.println("Entered OnDataRecv");
@@ -101,6 +101,9 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     case static_cast<int>(MessageType::MSG_DATA):
         // Copy received data to data structure
         memcpy(&forceMsg, incomingData, sizeof(forceMsg));
+        linkForceData[forceMsg.id - 1] = forceMsg.force_data;
+        Serial.println(forceMsg.id);
+        Serial.println(forceMsg.force_data);
         data_recv = true;
         break;
 
@@ -391,12 +394,14 @@ void loop() {
     esp_err_t send_err = esp_now_send(0, (uint8_t *) &zeroMsg, sizeof(zeroMsg));
 
     if (data_recv) {
-        linkForceData[forceMsg.id - 1] = forceMsg.force_data;
+        /*linkForceData[forceMsg.id - 1] = forceMsg.force_data;
         Serial.println(forceMsg.id);
         Serial.println(linkForceData[forceMsg.id - 1]);
-        data_recv = false;
+        data_recv = false;*/
     }
 
+    Serial.println(linkForceData[0]);
+    Serial.println(linkForceData[1]);
     for (uint8_t i = 0; i < NUM_LINKS; i++) {
         Serial.println(linkForceData[i]);
     }
