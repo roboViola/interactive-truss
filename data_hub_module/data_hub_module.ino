@@ -31,7 +31,7 @@ const uint8_t NUM_LINKS = 16;
 float linkForceData[NUM_LINKS]; // Array for all the force data
 uint8_t next_pair_id = 1; // Next ID number to be given to a peer
 esp_now_peer_info_t peerInfo;
-bool data_recv;
+//bool data_recv;
 
 // Define SSID and password for access-point station
 const char* ssid = "StationDemo";
@@ -94,7 +94,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     sense_msg forceMsg;
     uint8_t mac_addr_pair[6];
 
-    Serial.println("Entered OnDataRecv");
+    //Serial.println("Entered OnDataRecv");
     //Serial.println(static_cast<int>(incomingData[0]));
 
     switch (incomingData[0]) {
@@ -102,37 +102,37 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
         // Copy received data to data structure
         memcpy(&forceMsg, incomingData, sizeof(forceMsg));
         linkForceData[forceMsg.id - 1] = forceMsg.force_data;
-        Serial.println(forceMsg.id);
-        Serial.println(forceMsg.force_data);
-        data_recv = true;
+        //Serial.println(forceMsg.id);
+        //Serial.println(forceMsg.force_data);
+        //data_recv = true;
         break;
 
     case static_cast<int>(MessageType::MSG_PAIR_SN):
-        Serial.println("Entered Pair Processing");
+        //Serial.println("Entered Pair Processing");
         // Copy received data to data structure
         memcpy(&pairMsg, incomingData, sizeof(pairMsg));
-        Serial.println(pairMsg.id);
+        //Serial.println(pairMsg.id);
 
         if (pairMsg.id > 0) {     // do not replay to server itself
-            Serial.println("ID > 0");
+            //Serial.println("ID > 0");
             if (pairMsg.msg_type == MessageType::MSG_PAIR_SN) { 
                 // Server is in AP_STA mode: peers need to send data to server soft AP MAC address 
                 //WiFi.softAPmacAddress(pairMsg.mac_addr);
                 pairMsg.id = next_pair_id; // Set ID number to assign link module with
                 next_pair_id++;
-                Serial.println("Recieved Message from Peer");
+                /*Serial.println("Recieved Message from Peer");
                 Serial.println(pairMsg.mac_addr[0]);
                 Serial.println(pairMsg.mac_addr[1]);
                 Serial.println(pairMsg.mac_addr[2]);
                 Serial.println(pairMsg.mac_addr[3]);
                 Serial.println(pairMsg.mac_addr[4]);
-                Serial.println(pairMsg.mac_addr[5]);
+                Serial.println(pairMsg.mac_addr[5]);*/
 
                 addPeer(pairMsg.mac_addr);
                 pairMsg.msg_type = MessageType::MSG_PAIR_SV;
                 esp_wifi_get_mac(WIFI_IF_STA, pairMsg.mac_addr);
                 esp_err_t result = esp_now_send(peerInfo.peer_addr, (uint8_t *) &pairMsg, sizeof(pairMsg));
-                Serial.println("Response Send");
+                //Serial.println("Response Send");
             }
         }
         break; 
@@ -140,7 +140,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
 }
 
 bool addPeer(const uint8_t *peer_addr) {      // add pairing
-  Serial.println("Entered addPeer");
+  //Serial.println("Entered addPeer");
   memset(&peerInfo, 0, sizeof(peerInfo));
   const esp_now_peer_info_t *peer = &peerInfo;
   memcpy(peerInfo.peer_addr, peer_addr, 6);
@@ -265,7 +265,7 @@ void setup() {
     //Serial.print("Setting AP (Access Point)…");
     //Serial.println(WiFi.softAPIP());
 
-    Serial.println("Start of Setup");
+    //Serial.println("Start of Setup");
     if (init_err != ESP_OK) {
         // FIXME: Update to flash one of the LEDs as an error code
         Serial.println("Error initializing WiFi Access Point Station");
@@ -305,25 +305,25 @@ void setup() {
     
     // Start events handler
     server.addHandler(&events);
-    Serial.println("Getting ready to start server");
+    //Serial.println("Getting ready to start server");
     server.begin();
-    Serial.println("Server started");
+    //Serial.println("Server started");
     //delay(5000);
 
     // Set pin mode for reset pin
-    Serial.println("Prior to Pin Mode");
+    //Serial.println("Prior to Pin Mode");
     pinMode(ZERO_PIN, INPUT); 
-    Serial.println("Pin Mode Set Successfully");
+    //Serial.println("Pin Mode Set Successfully");
     /*
     // Create force data queue
     linkAddrsQueue = xQueueCreate(NUM_LINKS, 6);
     forceDataQueue = xQueueCreate(NUM_LINKS, sizeof(float));
     */
-    Serial.println("Queues Created Successfully");
+    //Serial.println("Queues Created Successfully");
 
     // TEST
     zeroMsg.zero_signal = false;
-    data_recv = false;
+    //data_recv = false;
 
     /*for (uint8_t i = 0; i < NUM_LINKS; i++) {
         linkForceData[i] = 0
@@ -393,15 +393,15 @@ void loop() {
 
     esp_err_t send_err = esp_now_send(0, (uint8_t *) &zeroMsg, sizeof(zeroMsg));
 
-    if (data_recv) {
-        /*linkForceData[forceMsg.id - 1] = forceMsg.force_data;
+    /*if (data_recv) {
+        linkForceData[forceMsg.id - 1] = forceMsg.force_data;
         Serial.println(forceMsg.id);
         Serial.println(linkForceData[forceMsg.id - 1]);
-        data_recv = false;*/
-    }
+        data_recv = false;
+    }*/
 
-    Serial.println(linkForceData[0]);
-    Serial.println(linkForceData[1]);
+    //Serial.println(linkForceData[0]);
+    //Serial.println(linkForceData[1]);
     for (uint8_t i = 0; i < NUM_LINKS; i++) {
         Serial.println(linkForceData[i]);
     }

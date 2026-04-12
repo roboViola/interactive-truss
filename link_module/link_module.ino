@@ -68,7 +68,7 @@ void SetLightColors(float force) {
 
 // OnDataSent(): Executes when data is sent
 bool OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
-    Serial.println("OnDataSent");
+    //Serial.println("OnDataSent");
     return status == ESP_NOW_SEND_SUCCESS;
 }
 
@@ -83,7 +83,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     Serial.println("OnDataRecv");
     memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
     Serial.println(zeroMsg.zero_signal); */
-    Serial.println("Received Data");
+    //Serial.println("Received Data");
     uint8_t mac_addr_pair[6];
 
     switch (incomingData[0]) {
@@ -96,7 +96,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
         break;
 
     case static_cast<int>(MessageType::MSG_PAIR_SV):    // we received pairing data from server
-        Serial.println("Received Pair Response");
+        //Serial.println("Received Pair Response");
         memcpy(&pairMsg, incomingData, sizeof(pairMsg));
         if (pairMsg.id > 0) {              // the message comes from server
             addPeer(pairMsg.mac_addr, chan); // add the server  to the peer list 
@@ -138,7 +138,7 @@ void setup() {
         return;
     }
     
-    Serial.println("Success initializing WiFi Access Point Station");
+    //Serial.println("Success initializing WiFi Access Point Station");
     // Set callback function of transmitted packet status
     esp_now_register_send_cb(esp_now_send_cb_t(OnDataSent));
 
@@ -151,12 +151,12 @@ void setup() {
     peerInfo.encrypt = false;
 
     esp_wifi_get_mac(WIFI_IF_STA, pairMsg.mac_addr);
-    Serial.println(pairMsg.mac_addr[0]);
+    /*Serial.println(pairMsg.mac_addr[0]);
     Serial.println(pairMsg.mac_addr[1]);
     Serial.println(pairMsg.mac_addr[2]);
     Serial.println(pairMsg.mac_addr[3]);
     Serial.println(pairMsg.mac_addr[4]);
-    Serial.println(pairMsg.mac_addr[5]);
+    Serial.println(pairMsg.mac_addr[5]);*/
 
     pairMsg.id = defaultId;
 
@@ -168,7 +168,7 @@ void setup() {
         Serial.println("Error adding peer");
         return;
     }
-    Serial.println("Success adding peer");
+    //Serial.println("Success adding peer");
 
     // Setup HX711 Module
     forceSensor.begin(DAT_PIN, CLK_PIN);
@@ -198,8 +198,8 @@ void loop() {
 
     forceMsg.force_data = forceMsg.force_data + 1;
     //Serial.println(forceMsg.force_data);
-    Serial.println(zeroMsg.zero_signal);
-    Serial.println(defaultId);
+    //Serial.println(zeroMsg.zero_signal);
+    //Serial.println(defaultId);
 
     //esp_now_send(hubAddr, (uint8_t *) "true", sizeof("true"));
     
@@ -214,13 +214,13 @@ void loop() {
     if (defaultId == 99) {
         pairMsg.msg_type = MessageType::MSG_PAIR_SN;
         esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &pairMsg, sizeof(pairMsg));
-        Serial.println(defaultId);
+        //Serial.println(defaultId);
     }
     else {
         forceMsg.id = defaultId;
-        Serial.println(forceMsg.id);
+        //Serial.println(forceMsg.id);
         esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));
-        Serial.println("Sent Force Data");
+        //Serial.println("Sent Force Data");
     }
 
     delay(250); // Reduce sample rate and data transmission to conserve battery life
