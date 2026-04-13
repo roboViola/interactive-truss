@@ -4,12 +4,15 @@
 // Enumerated Datatype for Message Type
 enum class MessageType : uint8_t {
     MSG_DATA,
-    MSG_RESET
+    MSG_RESET,
+    MSG_PAIR_SV,
+    MSG_PAIR_SN
 };
 
 // Structure for Sensor Data
-struct sense_msg {
+struct __attribute__((packed)) sense_msg {
     MessageType msg_type = MessageType::MSG_DATA;
+    uint8_t id;
     float force_data;
 };
 
@@ -17,6 +20,13 @@ struct sense_msg {
 struct zero_msg {
     MessageType msg_type = MessageType::MSG_RESET;
     bool zero_signal;
+};
+
+// Structure for Pairing
+struct pair_msg {
+    MessageType msg_type;
+    uint8_t id;
+    uint8_t mac_addr[6];
 };
 
 #endif
