@@ -23,7 +23,6 @@ zero_msg zeroMsg;
 pair_msg pairMsg;
 
 // Define variables for data transmission
-//const uint8_t hubAddr[6] = {0x94, 0x54, 0xC5, 0xB6, 0xE0, 0x88}; // Replace with Hub Module Address
 uint8_t hubAddr[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 uint8_t defaultId = 99; // Default ID value that represents unassigned ID
 const uint8_t chan = 1; // All devices will be set to the same channel, so no need to parse
@@ -68,56 +67,52 @@ void SetLightColors(float force) {
 
 // OnDataSent(): Executes when data is sent
 bool OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
-    //Serial.println("OnDataSent");
     return status == ESP_NOW_SEND_SUCCESS;
 }
 
 // OnDataRecv(): Executes when data is received
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length) {
-    /*memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
-
-    if (zeroMsg.zero_signal == true) {
-        forceSensor.tare();
-    }
-
-    Serial.println("OnDataRecv");
-    memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
-    Serial.println(zeroMsg.zero_signal); */
-    //Serial.println("Received Data");
     uint8_t mac_addr_pair[6];
 
+    // Determine which message type is being received
     switch (incomingData[0]) {
+    // Reset signal
     case static_cast<int>(MessageType::MSG_RESET) :      // we received data from server
         memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
-        /*if (zeroMsg.zero_signal == true) {
-            forceSensor.tare();
-        }*/
-        //Serial.println(zeroMsg.zero_signal);
+        
         break;
 
+    // Pairing data
     case static_cast<int>(MessageType::MSG_PAIR_SV):    // we received pairing data from server
-        //Serial.println("Received Pair Response");
         memcpy(&pairMsg, incomingData, sizeof(pairMsg));
+        
         if (pairMsg.id > 0) {              // the message comes from server
             addPeer(pairMsg.mac_addr, chan); // add the server  to the peer list 
             defaultId = pairMsg.id; // set the ID number of the link
         }
-        //Serial.println(defaultId);
+        
         break;
   }  
 }
 
 void addPeer(const uint8_t * mac_addr, uint8_t chan){
+  // Set channel and check for errors
   ESP_ERROR_CHECK(esp_wifi_set_channel(chan, WIFI_SECOND_CHAN_NONE));
+  
+  // Set up properties
   esp_now_del_peer(mac_addr);
   memset(&peerInfo, 0, sizeof(esp_now_peer_info_t));
   peerInfo.channel = chan;
   peerInfo.encrypt = false;
   memcpy(peerInfo.peer_addr, mac_addr, sizeof(uint8_t[6]));
+
+  // Check for error adding peer
   if (esp_now_add_peer(&peerInfo) != ESP_OK){
     Serial.println("Failed to add peer");
-    return;
+    //return;
   }
+
+  // Copy peer data
   memcpy(hubAddr, mac_addr, sizeof(uint8_t[6]));
 }
 
@@ -132,13 +127,13 @@ void setup() {
     esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);
     esp_err_t init_err = esp_now_init();
 
+    // Check for initialization errors
     if (init_err != ESP_OK) {
         // FIXME: Update to flash one of the LEDs as an error code
         Serial.println("Error initializing WiFi Station");
         return;
     }
     
-    //Serial.println("Success initializing WiFi Access Point Station");
     // Set callback function of transmitted packet status
     esp_now_register_send_cb(esp_now_send_cb_t(OnDataSent));
 
@@ -151,14 +146,7 @@ void setup() {
     peerInfo.encrypt = false;
 
     esp_wifi_get_mac(WIFI_IF_STA, pairMsg.mac_addr);
-    /*Serial.println(pairMsg.mac_addr[0]);
-    Serial.println(pairMsg.mac_addr[1]);
-    Serial.println(pairMsg.mac_addr[2]);
-    Serial.println(pairMsg.mac_addr[3]);
-    Serial.println(pairMsg.mac_addr[4]);
-    Serial.println(pairMsg.mac_addr[5]);*/
-
-    pairMsg.id = defaultId;
+    pairMsg.id = defaultId; // This is used to know the link is not paired yet
 
     // Add peer and check for errors 
     esp_err_t peer_err = esp_now_add_peer(&peerInfo);
@@ -166,9 +154,8 @@ void setup() {
     if (peer_err != ESP_OK) {
         // FIXME: Update to flash one of the LEDs as an error code
         Serial.println("Error adding peer");
-        return;
+        //return;
     }
-    //Serial.println("Success adding peer");
 
     // Setup HX711 Module
     forceSensor.begin(DAT_PIN, CLK_PIN);
@@ -185,42 +172,19 @@ void setup() {
 
 // Runs continuously after setup() to perform main program functions
 void loop() {
-    Serial.println("Loop");
-    
-    /*
-    // Obtain adjusted force data from the Wheatstone Bridge via the HX711/*
-    if (forceSensor.is_ready()) {
-        forceMsg.force_data = forceSensor.get_units(); // Move into structure for transmission
-        SetLightColors(forceMsg.force_data); // Set LED colors
-        strip.show(); // Push the color data out to the addressible LEDs 
-    }
-    */
-
+    // For testing and debugging communications
     forceMsg.force_data = forceMsg.force_data + 1;
-    //Serial.println(forceMsg.force_data);
-    //Serial.println(zeroMsg.zero_signal);
-    //Serial.println(defaultId);
-
-    //esp_now_send(hubAddr, (uint8_t *) "true", sizeof("true"));
     
-    /*// Sending errors
-    esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));
-    Serial.println("Sent Data");
-    
-    if (send_err != ESP_NOW_SEND_SUCCESS) {
-        // FIXME: Update to flash one of the LEDs as an error code
-        Serial.println("Error sending data");
-    }*/
+    // Send pairing request message if not already paired
     if (defaultId == 99) {
         pairMsg.msg_type = MessageType::MSG_PAIR_SN;
         esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &pairMsg, sizeof(pairMsg));
         //Serial.println(defaultId);
     }
+    // Send force data if pairing complete
     else {
         forceMsg.id = defaultId;
-        //Serial.println(forceMsg.id);
         esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));
-        //Serial.println("Sent Force Data");
     }
 
     delay(250); // Reduce sample rate and data transmission to conserve battery life
