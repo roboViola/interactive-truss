@@ -10,6 +10,7 @@ pair_msg pairMsg;
 
 // Define variables for data transmission
 const uint8_t NUM_LINKS = 16;
+bool buttonStates[16] = {false};
 float linkForceData[NUM_LINKS]; // Array for all the force data
 uint8_t next_pair_id = 1; // Next ID number to be given to a peer
 esp_now_peer_info_t peerInfo;
@@ -103,85 +104,233 @@ bool addPeer(const uint8_t *peer_addr) {
   }
 } 
 
+void setupServer(float data[16], bool buttons[16]) {
+
+    server.on("/", HTTP_GET, [data](AsyncWebServerRequest *request) {
+        request->send(200, "text/html", generateWebPage(data));
+    });
+
+    server.on("/data", HTTP_GET, [data](AsyncWebServerRequest *request) {
+        request->send(200, "application/json", arrayToJSON(data));
+    });
+
+    server.on("/update", HTTP_GET, [buttons](AsyncWebServerRequest *request) {
+
+        if (request->hasParam("b")) {
+            String val = request->getParam("b")->value();
+            parseButtonJSON(val, buttons);
+        }
+
+        request->send(200, "text/plain", "OK");
+    });
+
+    server.begin();
+}
+
 // HMTL page Index -> Runs when called by callback function
 /* Convert float array to JSON */
-String arrayToJSON()
-{
-  String json = "[";
+String arrayToJSON(float arr[16]) {
+    String json = "[";
+    
+    for (uint8_t i = 0; i < 16; i++) {
+        json += String(arr[i], 1);
+        
+        if (i < 15) {
+            json += ",";
+        }
+    }
 
-  for(int i=0;i<NUM_LINKS;i++)
-  {
-    json += String(linkForceData[i]);
+    json += "]";
 
-    if(i < NUM_LINKS-1)
-      json += ",";
-  }
+    return json;
+}
 
-  json += "]";
-  return json;
+void parseButtonJSON(String str, bool out[16]) {
+    for (uint8_t i = 0; i < 16; i++) out[i] = false;
+
+    uint8_t idx = 0;
+
+    for (uint8_t i = 0; i < str.length(); i++) {
+        if ((str[i] == '0' || str[i] == '1') && idx < 16) {
+            out[idx++] = (str[i] == '1');
+        }
+    }
 }
 
 /* HTML page */
-const char index_html[] PROGMEM = R"rawliteral(
+String generateWebPage(float data[16]) {
+
+    String json = arrayToJSON(data);
+
+    String html = R"rawliteral(
 <!DOCTYPE html>
 <html>
 <head>
-<title>Interactive Truss</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
 body {
-    font-family:Arial;
-    margin:20px;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: #111;
+    font-family: Arial;
 }
-table {
-    border-collapse:collapse;
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    width: 90vw;
+    height: 90vh;
 }
-th,td {
-    border:1px solid black;
-    padding:8px;
-    text-align:center;
+
+button {
+    border: none;
+    border-radius: 15px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 </style>
+
 </head>
+
 <body>
-<h1>Interactive Truss</h1>
-<table id="trussTable">
-    <tr>
-        <th>Link</th>
-        <th>Value</th>
-    </tr>
-</table>
+
+<div class="grid" id="grid"></div>
 
 <script>
-    const table = document.getElementById("trussTable");
 
-    /* Create table rows */
-    for(let i=0;i<NUM_LINKS;i++) {
-        let row = table.insertRow();
-        let linkCell = row.insertCell(0);
-        let valueCell = row.insertCell(1);
+let values = )rawliteral" + json + R"rawliteral(;
+let buttons = new Array(16).fill(false);
 
-        linkCell.innerHTML = "Link " + (i+1);
+// Set background color based on force state
+function getColor(val) {
 
-        valueCell.id = "value"+i;
-        valueCell.innerHTML = "0";
+    if (val >= -0.5 && val <= 0.5) {
+        return ["yellow", "black"];
+    }
+    if (val > 0) {
+        return ["blue", "white"];
+    }
+    return ["red", "black"];
+}
+
+// getActiveCount(): Returns number of links that are active in the truss
+function getActiveCount() {
+    let count = 0;
+
+    for (let i = 0; i < 16; i++) {
+        if (values[i] === 1000) break;
+        count++;
     }
 
-    /* Connect to ESP32 SSE stream */
-    const source = new EventSource("/events");
+    return count;
+}
 
-    /* Event listener for event.send() */
-    source.addEventListener("update", function(event) {
-        let data = JSON.parse(event.data);
+// buildGrid(): Builds the grid for the buttons with output data
+function buildGrid() {
 
-        for(let i=0;i<NUM_LINKS;i++) {
-            document.getElementById("value"+i).innerHTML = data[i];
-        }
+    const grid = document.getElementById("grid");
+
+    let activeCount = getActiveCount();
+
+    for (let i = 0; i < activeCount; i++) {
+
+        const btn = document.createElement("button");
+
+        btn.id = "btn-" + i;
+
+        const title = document.createElement("div");
+        title.style.fontSize = "18pt";
+        title.textContent = "Link " + (i + 1);
+
+        const value = document.createElement("div");
+        value.style.fontSize = "14pt";
+        value.id = "val-" + i;
+
+        btn.appendChild(title);
+        btn.appendChild(value);
+
+        // MOMENTARY INPUT
+        btn.onmousedown = () => sendState(i, true);
+        btn.onmouseup = () => sendState(i, false);
+        btn.onmouseleave = () => sendState(i, false);
+
+        btn.ontouchstart = () => sendState(i, true);
+        btn.ontouchend = () => sendState(i, false);
+        btn.ontouchcancel = () => sendState(i, false);
+
+        grid.appendChild(btn);
+    }
+}
+
+// updateButtons(): Updates the colors and text of the buttons without rebuilding them
+function updateButtons() {
+
+    let activeCount = getActiveCount();
+
+    for (let i = 0; i < activeCount; i++) {
+
+        const val = values[i];
+
+        const btn = document.getElementById("btn-" + i);
+        const valEl = document.getElementById("val-" + i);
+
+        if (!btn || !valEl) continue;
+
+        const color = getColor(val);
+
+        btn.style.backgroundColor = color[0];
+        btn.style.color = color[1];
+
+        valEl.textContent = val.toFixed(1);
+    }
+}
+
+// sendState(): Sends the state of the buttons being pressed back to ESP32
+function sendState(index, state) {
+
+    buttons[index] = state;
+
+    let payload = "";
+    for (let i = 0; i < 16; i++) {
+        payload += buttons[i] ? "1" : "0";
+    }
+
+    fetch("/update?b=" + payload);
+}
+
+// updateValues(): Updates the values for the buttons
+function updateValues() {
+
+    fetch("/data")
+    .then(r => r.json())
+    .then(data => {
+        values = data;
+        updateButtons();
     });
+}
+
+setInterval(updateValues, 250);
+
+// INIT
+buildGrid();
 
 </script>
+
 </body>
 </html>
 )rawliteral";
+
+    return html;
+}
 
 // Runs once at startup to initialize program values and settings
 void setup() {
@@ -207,11 +356,12 @@ void setup() {
     // Set callback function of received packed status
     esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv));
 
-    // Callback function for requesting the main page of the webserver
+    /*// Callback function for requesting the main page of the webserver
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
         request->send(200, "text/html", index_html);
         //request->send(200, "text/html", "<h1>Hello from ESP32 Async Server!</h1>");
-    });
+    });*/
+    setupServer(linkForceData, buttonStates);
     
     // Start events handler
     server.addHandler(&events);
@@ -245,7 +395,7 @@ void loop() {
     if(millis() - lastEventTime >= 400) {
         lastEventTime = millis();
 
-        String jsonArray = arrayToJSON();
+        String jsonArray = arrayToJSON(linkForceData);
 
         // Update table data
         events.send(jsonArray.c_str(), "update", millis());
