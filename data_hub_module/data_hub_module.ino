@@ -27,6 +27,13 @@ unsigned long lastEventTime = 0;
 // Define reset pin
 const bool ZERO_PIN = 0; // FIXME: Replace with actual pin number
 
+// resetForceVals():
+void resetForceVals(float data[16]) {
+    for (uint8_t i = 0; i < NUM_LINKS; i++) {
+        data[i] = 1000;
+    }
+}
+
 // OnDataSent(): Executes when data is sent
 bool OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
     return status == ESP_NOW_SEND_SUCCESS;
@@ -210,41 +217,32 @@ button {
 let values = )rawliteral" + json + R"rawliteral(;
 let buttons = new Array(16).fill(false);
 
-// Set background color based on force state
+// getColor(): Determines the color of the UI buttons
 function getColor(val) {
+
+    if (val === 1000) {
+        return ["gray", "white"];
+    }
 
     if (val >= -0.5 && val <= 0.5) {
         return ["yellow", "black"];
     }
+
     if (val > 0) {
         return ["blue", "white"];
     }
+
     return ["red", "black"];
 }
 
-// getActiveCount(): Returns number of links that are active in the truss
-function getActiveCount() {
-    let count = 0;
-
-    for (let i = 0; i < 16; i++) {
-        if (values[i] === 1000) break;
-        count++;
-    }
-
-    return count;
-}
-
-// buildGrid(): Builds the grid for the buttons with output data
+// buildGrid(): creates the 4 x 4 grid of buttons with outputs
 function buildGrid() {
 
     const grid = document.getElementById("grid");
 
-    let activeCount = getActiveCount();
-
-    for (let i = 0; i < activeCount; i++) {
+    for (let i = 0; i < 16; i++) {
 
         const btn = document.createElement("button");
-
         btn.id = "btn-" + i;
 
         const title = document.createElement("div");
@@ -258,7 +256,7 @@ function buildGrid() {
         btn.appendChild(title);
         btn.appendChild(value);
 
-        // MOMENTARY INPUT
+        // MOMENTARY INPUT (still active even if Offline)
         btn.onmousedown = () => sendState(i, true);
         btn.onmouseup = () => sendState(i, false);
         btn.onmouseleave = () => sendState(i, false);
@@ -271,12 +269,10 @@ function buildGrid() {
     }
 }
 
-// updateButtons(): Updates the colors and text of the buttons without rebuilding them
+// updateButtons(): Updates the data and text on the buttons without rebuilding them
 function updateButtons() {
 
-    let activeCount = getActiveCount();
-
-    for (let i = 0; i < activeCount; i++) {
+    for (let i = 0; i < 16; i++) {
 
         const val = values[i];
 
@@ -290,11 +286,15 @@ function updateButtons() {
         btn.style.backgroundColor = color[0];
         btn.style.color = color[1];
 
-        valEl.textContent = val.toFixed(1);
+        if (val === 1000) {
+            valEl.textContent = "Offline";
+        } else {
+            valEl.textContent = val.toFixed(1);
+        }
     }
 }
 
-// sendState(): Sends the state of the buttons being pressed back to ESP32
+// sendState(): sends whether the button was pressed or not back to ESP32 board
 function sendState(index, state) {
 
     buttons[index] = state;
@@ -307,7 +307,7 @@ function sendState(index, state) {
     fetch("/update?b=" + payload);
 }
 
-// updateValues(): Updates the values for the buttons
+// updateValues(): Fetches and updates the webpage
 function updateValues() {
 
     fetch("/data")
@@ -369,6 +369,7 @@ void setup() {
 
     // Set pin mode for reset pin
     pinMode(ZERO_PIN, INPUT); 
+    resetForceVals(linkForceData);
 
     // TEST
     zeroMsg.zero_signal = false;
