@@ -82,7 +82,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
         memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
         Serial.println("Received");
         if (zeroMsg.zero_signal == HIGH) {
-            //forceSensor.tare()
+            forceSensor.tare();
             //forceSensor.set_offset(forceSensor.getUnits());
             Serial.println("Zero");
         }
@@ -200,7 +200,8 @@ void loop() {
             //forceMsg.force_data = forceSensor.get_units();
             //forceMsg.force_data = forceSensor.get_units(); // Move into structure for transmission
             //Serial.println("Force Sensor Ready");
-            //Serial.println(forceSensor.get_units());
+            
+            Serial.println(forceSensor.get_units());
             
             //SetLightColors(forceMsg.force_data); // Set LED colors
             //strip.show(); // Push the color data out to the addressible LEDs 
