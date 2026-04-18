@@ -25,7 +25,7 @@ AsyncEventSource events("/events"); // Live updates to webpage viewed on phone o
 unsigned long lastEventTime = 0;
 
 // Define reset pin
-const bool ZERO_PIN = 0; // FIXME: Replace with actual pin number
+const uint ZERO_PIN = D4; // FIXME: Replace with actual pin number
 
 // resetForceVals():
 void resetForceVals(float data[16]) {
@@ -337,7 +337,7 @@ void setup() {
     // Start Serial Terminal with delay
     Serial.begin(115200);
     delay(2000); // wait 2 seconds
-
+    
     // Set device to be a WiFi Access-Point Station
     WiFi.mode(WIFI_AP_STA);
     esp_err_t init_err = esp_now_init();
@@ -372,17 +372,20 @@ void setup() {
     resetForceVals(linkForceData);
 
     // TEST
-    zeroMsg.zero_signal = false;
+    //zeroMsg.zero_signal = false;
 }
 
 // Runs continuously after setup() to perform main program functions
 void loop() {
     // Data Transmission Debug Test
-    zeroMsg.zero_signal = !zeroMsg.zero_signal;
+    //zeroMsg.zero_signal = !zeroMsg.zero_signal;
     
     // Check if the zero button was pressed
     if (digitalRead(ZERO_PIN) == HIGH) {
         zeroMsg.zero_signal = HIGH;
+    }
+    else {
+        zeroMsg.zero_signal = LOW;
     }
 
     // Send reset to all links

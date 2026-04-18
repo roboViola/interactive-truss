@@ -77,9 +77,15 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     // Determine which message type is being received
     switch (incomingData[0]) {
     // Reset signal
+    Serial.println("Incoming");
     case static_cast<int>(MessageType::MSG_RESET) :      // we received data from server
         memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
-        forceSensor.tare();
+        Serial.println("Received");
+        if (zeroMsg.zero_signal == HIGH) {
+            //forceSensor.tare()
+            //forceSensor.set_offset(forceSensor.getUnits());
+            Serial.println("Zero");
+        }
         
         break;
 
@@ -194,7 +200,7 @@ void loop() {
             //forceMsg.force_data = forceSensor.get_units();
             //forceMsg.force_data = forceSensor.get_units(); // Move into structure for transmission
             //Serial.println("Force Sensor Ready");
-            Serial.println(forceSensor.get_units());
+            //Serial.println(forceSensor.get_units());
             
             //SetLightColors(forceMsg.force_data); // Set LED colors
             //strip.show(); // Push the color data out to the addressible LEDs 
