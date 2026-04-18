@@ -189,9 +189,9 @@ void loop() {
         forceMsg.id = defaultId;
 
         if (forceSensor.is_ready()) {
-            forceMsg.force_data = forceSensor.get_units();
-            forceMsg.force_data = forceSensor.get_units(); // Move into structure for transmission
-            
+            //forceMsg.force_data = forceSensor.get_units();
+            //forceMsg.force_data = forceSensor.get_units(); // Move into structure for transmission
+            Serial.println(forceSensor.get_units());
             
             //SetLightColors(forceMsg.force_data); // Set LED colors
             //strip.show(); // Push the color data out to the addressible LEDs 
