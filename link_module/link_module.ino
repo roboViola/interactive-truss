@@ -170,7 +170,7 @@ void setup() {
     strip.show();
 
     // TEST
-    forceMsg.force_data = 0;
+    forceMsg.force_data = -50;
 }
 
 // Runs continuously after setup() to perform main program functions
