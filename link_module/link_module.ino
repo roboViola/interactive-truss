@@ -29,8 +29,8 @@ const uint8_t chan = 1; // All devices will be set to the same channel, so no ne
 esp_now_peer_info_t peerInfo;
 
 // Define HX711 Module
-const uint8_t DAT_PIN = 2;
-const uint8_t CLK_PIN = 3;
+const uint8_t DAT_PIN = D0;
+const uint8_t CLK_PIN = D2;
 
 HX711 forceSensor;
 
@@ -50,7 +50,6 @@ void SetLightColors(float force) {
 
     // Clear the last colors from the LED strip
     strip.clear();
-    Serial.println(force);
 
     // Check if Zero-Force Member
     if (abs(force) < 0.5) {
@@ -177,6 +176,7 @@ void loop() {
     forceMsg.force_data = forceMsg.force_data + 1;
     SetLightColors(forceMsg.force_data); // Set LED colors
     strip.show(); // Push the color data out to the addressible LEDs 
+    Serial.println(defaultId);
     
     // Send pairing request message if not already paired
     if (defaultId == 99) {
@@ -187,10 +187,12 @@ void loop() {
     // Send force data if pairing complete
     else {
         forceMsg.id = defaultId;
+        Serial.println("In Data Read");
 
         if (forceSensor.is_ready()) {
             //forceMsg.force_data = forceSensor.get_units();
             //forceMsg.force_data = forceSensor.get_units(); // Move into structure for transmission
+            Serial.println("Force Sensor Ready");
             Serial.println(forceSensor.get_units());
             
             //SetLightColors(forceMsg.force_data); // Set LED colors
