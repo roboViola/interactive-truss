@@ -7,6 +7,7 @@
 // Define structures used for data transmission
 zero_msg zeroMsg;
 pair_msg pairMsg;
+sense_msg idReqMsg;
 
 // Define variables for data transmission
 const uint8_t NUM_LINKS = 16;
@@ -396,7 +397,8 @@ void loop() {
         //Serial.println(buttonStates[i]);
         //Serial.println();
         if (buttonStates[i] == true) {
-            Serial.println(i);
+            idReqMsg.id = i + 1;
+            esp_now_send(0, (uint8_t *) &idReqMsg, sizeof(idReqMsg));
         }
     }
 
@@ -408,7 +410,7 @@ void loop() {
 
         // Update table data
         events.send(jsonArray.c_str(), "update", millis());
-  }
+    }
 
     delay(500); // Reduce sample rate and data transmission to conserve battery life
 }

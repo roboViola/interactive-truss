@@ -6,7 +6,8 @@ enum class MessageType : uint8_t {
     MSG_DATA,
     MSG_RESET,
     MSG_PAIR_SV,
-    MSG_PAIR_SN
+    MSG_PAIR_SN,
+    MSG_LINK_ID
 };
 
 // Structure for Sensor Data
@@ -27,6 +28,12 @@ struct pair_msg {
     MessageType msg_type;
     uint8_t id;
     uint8_t mac_addr[6];
+};
+
+// Structure for ID Request
+struct id_msg {
+    MessageType msg_type = MessageType::MSG_LINK_ID;
+    uint8_t id;
 };
 
 #endif

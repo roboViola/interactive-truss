@@ -21,12 +21,18 @@ uint32_t BLUE = strip.Color(0, 0, 255); // Tension (+)
 sense_msg forceMsg;
 zero_msg zeroMsg;
 pair_msg pairMsg;
+id_msg idReqMsg;
 
 // Define variables for data transmission
 uint8_t hubAddr[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 uint8_t defaultId = 99; // Default ID value that represents unassigned ID
 const uint8_t chan = 1; // All devices will be set to the same channel, so no need to parse
 esp_now_peer_info_t peerInfo;
+
+bool idReq = false; // Set request for self-identification to be false
+bool blinkState = 0; // 0 = off, 1 = on
+uint8_t blinkCount = 0;
+unsigned long lastBlinkTime = 0;
 
 // Define HX711 Module
 const uint8_t DAT_PIN = D0;
@@ -77,14 +83,14 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     // Determine which message type is being received
     switch (incomingData[0]) {
     // Reset signal
-    Serial.println("Incoming");
+    //Serial.println("Incoming");
     case static_cast<int>(MessageType::MSG_RESET) :      // we received data from server
         memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
-        Serial.println("Received");
+        //Serial.println("Received");
         if (zeroMsg.zero_signal == HIGH) {
             forceSensor.tare();
             //forceSensor.set_offset(forceSensor.getUnits());
-            Serial.println("Zero");
+            //Serial.println("Zero");
         }
         
         break;
@@ -98,6 +104,16 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
             defaultId = pairMsg.id; // set the ID number of the link
         }
         
+        break;
+    
+    // Identification Request
+    case static_cast<int>(MessageType::MSG_LINK_ID):
+        memcpy(&idReqMsg, incomingData, sizeof(idReqMsg));
+
+        if (idReqMsg.id == defaultId) {
+            idReq = true;
+        }
+
         break;
   }  
 }
@@ -200,7 +216,6 @@ void loop() {
             //forceMsg.force_data = forceSensor.get_units();
             //forceMsg.force_data = forceSensor.get_units(); // Move into structure for transmission
             //Serial.println("Force Sensor Ready");
-            
             Serial.println(forceSensor.get_units());
             
             //SetLightColors(forceMsg.force_data); // Set LED colors
@@ -208,6 +223,29 @@ void loop() {
         }
 
         esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));
+    }
+
+    if (idReq) {
+        // Update table data every 400 ms
+        if(millis() - lastBlinkTime >= 500) {
+            if (!blinkState) {
+                strip.fill((0,0,0));
+                strip.show();
+            }
+            else {
+                SetLightColors(forceMsg.force_data); // Set LED colors
+                strip.show();
+            }
+            
+            lastBlinkTime = millis();
+            blinkCount++;
+            blinkState = !blinkState;
+
+            if (blinkCount == 3) {
+                blinkCount = 0;
+                idReq = false;
+            }
+        }
     }
 
     delay(50); // Reduce sample rate and data transmission to conserve battery life
