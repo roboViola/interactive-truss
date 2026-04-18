@@ -54,14 +54,17 @@ void SetLightColors(float force) {
     // Check if Zero-Force Member
     if (abs(force) < 0.5) {
         strip.fill(YELLOW, 0, 1);
+        Serial.println("Yellow");
     }
     // Check if Compression Member
     else if (force < 0) {
         strip.fill(RED, 0, force / 10);
+        Serial.println("Red");
     }
     // Check if Tension Member
     else {
         strip.fill(BLUE, 0, force / 10);
+        Serial.println("Blue");
     }
 }
 
