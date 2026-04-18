@@ -59,12 +59,12 @@ void SetLightColors(float force) {
     }
     // Check if Compression Member
     else if (force < 0) {
-        strip.fill(RED, 0, abs(force / 10));
+        strip.fill(RED, 0, abs(force / 10) + 1);
         Serial.println("Red");
     }
     // Check if Tension Member
     else {
-        strip.fill(BLUE, 0, abs(force / 10));
+        strip.fill(BLUE, 0, abs(force / 10) + 1);
         Serial.println("Blue");
     }
 }
@@ -202,5 +202,5 @@ void loop() {
         esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));
     }
 
-    delay(250); // Reduce sample rate and data transmission to conserve battery life
+    delay(500); // Reduce sample rate and data transmission to conserve battery life
 }
