@@ -7,7 +7,7 @@
 
 // Addressible LED properties
 const uint8_t NUM_LEDS = 5;
-const uint8_t LED_DATA = 4;
+const uint8_t LED_DATA = D0;
 
 Adafruit_NeoPixel strip(NUM_LEDS, LED_DATA, NEO_GRB + NEO_KHZ800);
 
@@ -174,6 +174,8 @@ void setup() {
 void loop() {
     // For testing and debugging communications
     forceMsg.force_data = forceMsg.force_data + 1;
+    SetLightColors(forceMsg.force_data); // Set LED colors
+    strip.show(); // Push the color data out to the addressible LEDs 
     
     // Send pairing request message if not already paired
     if (defaultId == 99) {
@@ -184,6 +186,15 @@ void loop() {
     // Send force data if pairing complete
     else {
         forceMsg.id = defaultId;
+
+        /*if (forceSensor.is_ready()) {
+            forceMsg.force_data = forceSensor.get_units();
+            forceMsg.force_data = forceSensor.get_units(); // Move into structure for transmission
+            
+            SetLightColors(forceMsg.force_data); // Set LED colors
+            strip.show(); // Push the color data out to the addressible LEDs 
+        }*/
+
         esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));
     }
 
