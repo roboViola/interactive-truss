@@ -55,17 +55,14 @@ void SetLightColors(float force) {
     // Check if Zero-Force Member
     if (abs(force) < 0.5) {
         strip.fill(YELLOW, 0, 1);
-        Serial.println("Yellow");
     }
     // Check if Compression Member
     else if (force < 0) {
         strip.fill(RED, 0, abs(force / 10) + 1);
-        Serial.println("Red");
     }
     // Check if Tension Member
     else {
         strip.fill(BLUE, 0, abs(force / 10) + 1);
-        Serial.println("Blue");
     }
 }
 
@@ -191,16 +188,17 @@ void loop() {
     else {
         forceMsg.id = defaultId;
 
-        /*if (forceSensor.is_ready()) {
+        if (forceSensor.is_ready()) {
             forceMsg.force_data = forceSensor.get_units();
             forceMsg.force_data = forceSensor.get_units(); // Move into structure for transmission
             
-            SetLightColors(forceMsg.force_data); // Set LED colors
-            strip.show(); // Push the color data out to the addressible LEDs 
-        }*/
+            
+            //SetLightColors(forceMsg.force_data); // Set LED colors
+            //strip.show(); // Push the color data out to the addressible LEDs 
+        }
 
         esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));
     }
 
-    delay(500); // Reduce sample rate and data transmission to conserve battery life
+    delay(750); // Reduce sample rate and data transmission to conserve battery life
 }
