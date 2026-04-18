@@ -13,7 +13,7 @@ Adafruit_NeoPixel strip(NUM_LEDS, LED_DATA, NEO_GRB + NEO_KHZ800);
 
 // Define colors for the addressible LEDs
 // Pixels are GRB, not RGB
-uint32_t RED = strip.Color(0, 255, 0); // Compression (-)
+uint32_t RED = strip.Color(255, 0, 0); // Compression (-)
 uint32_t YELLOW = strip.Color(255, 255, 0); // Zero-Force
 uint32_t BLUE = strip.Color(0, 0, 255); // Tension (+)
 
