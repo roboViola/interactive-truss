@@ -392,7 +392,12 @@ void loop() {
     esp_err_t send_err = esp_now_send(0, (uint8_t *) &zeroMsg, sizeof(zeroMsg));
 
     for (uint8_t i = 0; i < NUM_LINKS; i++) {
-        Serial.println(linkForceData[i]);
+        //Serial.println(linkForceData[i]);
+        //Serial.println(buttonStates[i]);
+        //Serial.println();
+        if (buttonStates[i] == true) {
+            Serial.println(i);
+        }
     }
 
     // Update table data every 400 ms
