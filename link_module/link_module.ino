@@ -7,7 +7,7 @@
 
 // Addressible LED properties
 const uint8_t NUM_LEDS = 5;
-const uint8_t LED_DATA = D0;
+const uint8_t LED_DATA = D4;
 
 Adafruit_NeoPixel strip(NUM_LEDS, LED_DATA, NEO_GRB + NEO_KHZ800);
 
