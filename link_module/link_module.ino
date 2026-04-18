@@ -50,6 +50,7 @@ void SetLightColors(float force) {
 
     // Clear the last colors from the LED strip
     strip.clear();
+    Serial.println(force);
 
     // Check if Zero-Force Member
     if (abs(force) < 0.5) {
