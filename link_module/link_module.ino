@@ -79,6 +79,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     // Reset signal
     case static_cast<int>(MessageType::MSG_RESET) :      // we received data from server
         memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
+        forceSensor.tare();
         
         break;
 
@@ -176,7 +177,7 @@ void loop() {
     forceMsg.force_data = forceMsg.force_data + 1;
     SetLightColors(forceMsg.force_data); // Set LED colors
     strip.show(); // Push the color data out to the addressible LEDs 
-    Serial.println(defaultId);
+    //Serial.println(defaultId);
     
     // Send pairing request message if not already paired
     if (defaultId == 99) {
@@ -187,12 +188,12 @@ void loop() {
     // Send force data if pairing complete
     else {
         forceMsg.id = defaultId;
-        Serial.println("In Data Read");
+        //Serial.println("In Data Read");
 
         if (forceSensor.is_ready()) {
             //forceMsg.force_data = forceSensor.get_units();
             //forceMsg.force_data = forceSensor.get_units(); // Move into structure for transmission
-            Serial.println("Force Sensor Ready");
+            //Serial.println("Force Sensor Ready");
             Serial.println(forceSensor.get_units());
             
             //SetLightColors(forceMsg.force_data); // Set LED colors
@@ -202,5 +203,5 @@ void loop() {
         esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));
     }
 
-    delay(750); // Reduce sample rate and data transmission to conserve battery life
+    delay(50); // Reduce sample rate and data transmission to conserve battery life
 }
