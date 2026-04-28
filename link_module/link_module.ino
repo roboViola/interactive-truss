@@ -12,7 +12,6 @@ const uint8_t LED_DATA = D4;
 Adafruit_NeoPixel strip(NUM_LEDS, LED_DATA, NEO_GRB + NEO_KHZ800);
 
 // Define colors for the addressible LEDs
-// Pixels are GRB, not RGB
 uint32_t RED = strip.Color(255, 0, 0); // Compression (-)
 uint32_t YELLOW = strip.Color(255, 255, 0); // Zero-Force
 uint32_t BLUE = strip.Color(0, 0, 255); // Tension (+)
@@ -41,7 +40,7 @@ const uint8_t CLK_PIN = D2;
 HX711 forceSensor;
 
 // Define offset and scaling 
-const float sensor_scale = -142.94; // FIXME: add actual value
+const float sensor_scale = -142.94;
 
 // SetLightColors(): Determines the color and number of addressible LEDs to turn on
 void SetLightColors(float force) {
@@ -81,27 +80,21 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     uint8_t mac_addr_pair[6];
 
     // Determine which message type is being received
-    //Serial.println("Incoming");
-    //Serial.println(incomingData[0]);
-    //Serial.println(static_cast<int>(MessageType::MSG_LINK_ID));
     switch (incomingData[0]) {
     // Reset signal
-    case static_cast<int>(MessageType::MSG_RESET):      // we received data from server
+    case static_cast<int>(MessageType::MSG_RESET):
         memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
-        //Serial.println("Received");
         if (zeroMsg.zero_signal == HIGH) {
             forceSensor.tare();
-            //forceSensor.set_offset(forceSensor.getUnits());
-            //Serial.println("Zero");
         }
         
         break;
 
     // Pairing data
-    case static_cast<int>(MessageType::MSG_PAIR_SV):    // we received pairing data from server
+    case static_cast<int>(MessageType::MSG_PAIR_SV):
         memcpy(&pairMsg, incomingData, sizeof(pairMsg));
         
-        if (pairMsg.id > 0) {              // the message comes from server
+        if (pairMsg.id > 0) {
             addPeer(pairMsg.mac_addr, chan); // add the server  to the peer list 
             defaultId = pairMsg.id; // set the ID number of the link
         }
@@ -110,12 +103,10 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     
     // Identification Request
     case static_cast<int>(MessageType::MSG_LINK_ID):
-        Serial.println("Received");
         memcpy(&idReqMsg, incomingData, sizeof(idReqMsg));
 
         if (idReqMsg.id == defaultId) {
             idReq = true;
-            Serial.println("Found");
         }
 
         break;
@@ -136,7 +127,6 @@ void addPeer(const uint8_t * mac_addr, uint8_t chan){
   // Check for error adding peer
   if (esp_now_add_peer(&peerInfo) != ESP_OK){
     Serial.println("Failed to add peer");
-    //return;
   }
 
   // Copy peer data
@@ -156,7 +146,6 @@ void setup() {
 
     // Check for initialization errors
     if (init_err != ESP_OK) {
-        // FIXME: Update to flash one of the LEDs as an error code
         Serial.println("Error initializing WiFi Station");
         return;
     }
@@ -173,15 +162,13 @@ void setup() {
     peerInfo.encrypt = false;
 
     esp_wifi_get_mac(WIFI_IF_STA, pairMsg.mac_addr);
-    pairMsg.id = defaultId; // This is used to know the link is not paired yet
+    pairMsg.id = defaultId; // this is used to know the link is not paired yet
 
     // Add peer and check for errors 
     esp_err_t peer_err = esp_now_add_peer(&peerInfo);
 
     if (peer_err != ESP_OK) {
-        // FIXME: Update to flash one of the LEDs as an error code
         Serial.println("Error adding peer");
-        //return;
     }
 
     // Setup HX711 Module
@@ -193,58 +180,52 @@ void setup() {
     strip.begin();
     strip.show();
 
-    // TEST
+    // Initialization value
     forceMsg.force_data = -50;
 }
 
 // Runs continuously after setup() to perform main program functions
 void loop() {
-    // For testing and debugging communications
-    //forceMsg.force_data = forceMsg.force_data + 1;
-    SetLightColors(forceMsg.force_data); // Set LED colors
-    strip.show(); // Push the color data out to the addressible LEDs 
-    //Serial.println(defaultId);
+    // Set and send LED color data
+    SetLightColors(forceMsg.force_data);
+    strip.show();
     
     // Send pairing request message if not already paired
     if (defaultId == 99) {
         pairMsg.msg_type = MessageType::MSG_PAIR_SN;
         esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &pairMsg, sizeof(pairMsg));
-        //Serial.println(defaultId);
     }
     // Send force data if pairing complete
     else {
         forceMsg.id = defaultId;
-        //Serial.println("In Data Read");
 
         if (forceSensor.is_ready()) {
-            //forceMsg.force_data = forceSensor.get_units();
-            forceMsg.force_data = forceSensor.get_units(); // Move into structure for transmission
-            //Serial.println("Force Sensor Ready");
-            Serial.println(forceSensor.get_units());
-            
-            //SetLightColors(forceMsg.force_data); // Set LED colors
-            //strip.show(); // Push the color data out to the addressible LEDs 
+            forceMsg.force_data = forceSensor.get_units(); // move into structure for transmission
         }
 
         esp_err_t send_err = esp_now_send(hubAddr, (uint8_t *) &forceMsg, sizeof(forceMsg));
     }
 
+    // Flash LEDs if Link is requested to identify itself
     if (idReq) {
-        // Update table data every 400 ms
+        // Update table data every 500 ms
         if(millis() - lastBlinkTime >= 500) {
             if (!blinkState) {
                 strip.fill((0,0,0));
                 strip.show();
             }
             else {
-                SetLightColors(forceMsg.force_data); // Set LED colors
+                // Set LED colors
+                SetLightColors(forceMsg.force_data);
                 strip.show();
             }
             
+            // Update timing and blink count
             lastBlinkTime = millis();
             blinkCount++;
             blinkState = !blinkState;
 
+            // Blink five times
             if (blinkCount == 10) {
                 blinkCount = 0;
                 idReq = false;
@@ -252,5 +233,5 @@ void loop() {
         }
     }
 
-    delay(50); // Reduce sample rate and data transmission to conserve battery life
+    delay(50); // reduce sample rate and data transmission to conserve battery life
 }
