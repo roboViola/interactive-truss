@@ -37,7 +37,6 @@ void resetForceVals(float data[16]) {
 
 // OnDataSent(): Executes when data is sent
 bool OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
-    Serial.print(status == ESP_NOW_SEND_SUCCESS);
     return status == ESP_NOW_SEND_SUCCESS;
 }
 
@@ -61,9 +60,10 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
         // Copy received data to data structure
         memcpy(&pairMsg, incomingData, sizeof(pairMsg));
 
-        if (pairMsg.id > 0) {     // do not replay to server itself
+        if (pairMsg.id > 0) {
             if (pairMsg.msg_type == MessageType::MSG_PAIR_SN) { 
-                pairMsg.id = next_pair_id; // Set ID number to assign link module with
+                // Set ID number to assign link module with
+                pairMsg.id = next_pair_id;
                 next_pair_id++;
 
                 // Add peer
@@ -88,41 +88,41 @@ bool addPeer(const uint8_t *peer_addr) {
   memcpy(peerInfo.peer_addr, peer_addr, 6);
   
   // Set communication properties
-  peerInfo.channel = 1; // pick a channel
-  peerInfo.encrypt = 0; // no encryption
+  peerInfo.channel = 1;
+  peerInfo.encrypt = 0; 
 
   // Check if the peer exists
   bool exists = esp_now_is_peer_exist(peerInfo.peer_addr);
   if (exists) {
     // Peer already paired.
-    Serial.println("Already Paired");
     return true;
   }
   else {
     esp_err_t addStatus = esp_now_add_peer(peer);
     if (addStatus == ESP_OK) {
       // Pair success
-      Serial.println("Pair success");
       return true;
     }
     else 
     {
-      Serial.println("Pair failed");
       return false;
     }
   }
 } 
 
+// setupServer(): Manages webpage content
 void setupServer(float data[16], bool buttons[16]) {
-
+    // Build webpage on initiation
     server.on("/", HTTP_GET, [data](AsyncWebServerRequest *request) {
         request->send(200, "text/html", generateWebPage(data));
     });
 
+    // Update the force values
     server.on("/data", HTTP_GET, [data](AsyncWebServerRequest *request) {
         request->send(200, "application/json", arrayToJSON(data));
     });
 
+    // Get button states
     server.on("/update", HTTP_GET, [buttons](AsyncWebServerRequest *request) {
 
         if (request->hasParam("b")) {
@@ -136,8 +136,7 @@ void setupServer(float data[16], bool buttons[16]) {
     server.begin();
 }
 
-// HMTL page Index -> Runs when called by callback function
-/* Convert float array to JSON */
+// arrayToJSON(): Convert float array to JSON for webpage
 String arrayToJSON(float arr[16]) {
     String json = "[";
     
@@ -154,6 +153,7 @@ String arrayToJSON(float arr[16]) {
     return json;
 }
 
+// parseButtonJSON(): Convert webpage button states into boolean array
 void parseButtonJSON(String str, bool out[16]) {
     for (uint8_t i = 0; i < 16; i++) out[i] = false;
 
@@ -166,7 +166,7 @@ void parseButtonJSON(String str, bool out[16]) {
     }
 }
 
-/* HTML page */
+// generateWebPage(): HTML code for web app
 String generateWebPage(float data[16]) {
 
     String json = arrayToJSON(data);
@@ -334,7 +334,7 @@ buildGrid();
     return html;
 }
 
-// Runs once at startup to initialize program values and settings
+// setup(): Runs once at startup to initialize program values and settings
 void setup() {
     // Start Serial Terminal with delay
     Serial.begin(115200);
@@ -349,7 +349,6 @@ void setup() {
     if (init_err != ESP_OK) {
         // FIXME: Update to flash one of the LEDs as an error code
         Serial.println("Error initializing WiFi Access Point Station");
-        //return;
     }
     
     // Set callback function of transmitted packet status
@@ -358,11 +357,6 @@ void setup() {
     // Set callback function of received packed status
     esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv));
 
-    /*// Callback function for requesting the main page of the webserver
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(200, "text/html", index_html);
-        //request->send(200, "text/html", "<h1>Hello from ESP32 Async Server!</h1>");
-    });*/
     setupServer(linkForceData, buttonStates);
     
     // Start events handler
@@ -372,16 +366,10 @@ void setup() {
     // Set pin mode for reset pin
     pinMode(ZERO_PIN, INPUT); 
     resetForceVals(linkForceData);
-
-    // TEST
-    //zeroMsg.zero_signal = false;
 }
 
-// Runs continuously after setup() to perform main program functions
-void loop() {
-    // Data Transmission Debug Test
-    //zeroMsg.zero_signal = !zeroMsg.zero_signal;
-    
+// loop(): Runs continuously after setup() to perform main program functions
+void loop() {    
     // Check if the zero button was pressed
     if (digitalRead(ZERO_PIN) == HIGH) {
         zeroMsg.zero_signal = HIGH;
@@ -392,17 +380,12 @@ void loop() {
 
     // Send reset to all links
     esp_err_t send_err = esp_now_send(0, (uint8_t *) &zeroMsg, sizeof(zeroMsg));
-    Serial.println("Zero");
 
     for (uint8_t i = 0; i < NUM_LINKS; i++) {
-        //Serial.println(linkForceData[i]);
-        //Serial.println(buttonStates[i]);
-        //Serial.println();
         if (buttonStates[i] == true) {
             idReqMsg.msg_type = MessageType::MSG_LINK_ID;
             idReqMsg.id = i + 1;
             esp_now_send(0, (uint8_t *) &idReqMsg, sizeof(idReqMsg));
-            Serial.println(static_cast<int>(idReqMsg.msg_type));
         }
     }
 
