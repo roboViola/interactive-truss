@@ -37,6 +37,7 @@ void resetForceVals(float data[16]) {
 
 // OnDataSent(): Executes when data is sent
 bool OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+    Serial.print(status == ESP_NOW_SEND_SUCCESS);
     return status == ESP_NOW_SEND_SUCCESS;
 }
 
@@ -391,14 +392,17 @@ void loop() {
 
     // Send reset to all links
     esp_err_t send_err = esp_now_send(0, (uint8_t *) &zeroMsg, sizeof(zeroMsg));
+    Serial.println("Zero");
 
     for (uint8_t i = 0; i < NUM_LINKS; i++) {
         //Serial.println(linkForceData[i]);
         //Serial.println(buttonStates[i]);
         //Serial.println();
         if (buttonStates[i] == true) {
+            idReqMsg.msg_type = MessageType::MSG_LINK_ID;
             idReqMsg.id = i + 1;
             esp_now_send(0, (uint8_t *) &idReqMsg, sizeof(idReqMsg));
+            Serial.println(static_cast<int>(idReqMsg.msg_type));
         }
     }
 

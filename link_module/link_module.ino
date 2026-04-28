@@ -41,7 +41,7 @@ const uint8_t CLK_PIN = D2;
 HX711 forceSensor;
 
 // Define offset and scaling 
-const float sensor_scale = 0; // FIXME: add actual value
+const float sensor_scale = -142.94; // FIXME: add actual value
 
 // SetLightColors(): Determines the color and number of addressible LEDs to turn on
 void SetLightColors(float force) {
@@ -81,10 +81,12 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     uint8_t mac_addr_pair[6];
 
     // Determine which message type is being received
+    //Serial.println("Incoming");
+    //Serial.println(incomingData[0]);
+    //Serial.println(static_cast<int>(MessageType::MSG_LINK_ID));
     switch (incomingData[0]) {
     // Reset signal
-    //Serial.println("Incoming");
-    case static_cast<int>(MessageType::MSG_RESET) :      // we received data from server
+    case static_cast<int>(MessageType::MSG_RESET):      // we received data from server
         memcpy(&zeroMsg, incomingData, sizeof(zeroMsg));
         //Serial.println("Received");
         if (zeroMsg.zero_signal == HIGH) {
@@ -108,10 +110,12 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int length
     
     // Identification Request
     case static_cast<int>(MessageType::MSG_LINK_ID):
+        Serial.println("Received");
         memcpy(&idReqMsg, incomingData, sizeof(idReqMsg));
 
         if (idReqMsg.id == defaultId) {
             idReq = true;
+            Serial.println("Found");
         }
 
         break;
@@ -196,7 +200,7 @@ void setup() {
 // Runs continuously after setup() to perform main program functions
 void loop() {
     // For testing and debugging communications
-    forceMsg.force_data = forceMsg.force_data + 1;
+    //forceMsg.force_data = forceMsg.force_data + 1;
     SetLightColors(forceMsg.force_data); // Set LED colors
     strip.show(); // Push the color data out to the addressible LEDs 
     //Serial.println(defaultId);
@@ -214,7 +218,7 @@ void loop() {
 
         if (forceSensor.is_ready()) {
             //forceMsg.force_data = forceSensor.get_units();
-            //forceMsg.force_data = forceSensor.get_units(); // Move into structure for transmission
+            forceMsg.force_data = forceSensor.get_units(); // Move into structure for transmission
             //Serial.println("Force Sensor Ready");
             Serial.println(forceSensor.get_units());
             
@@ -241,7 +245,7 @@ void loop() {
             blinkCount++;
             blinkState = !blinkState;
 
-            if (blinkCount == 3) {
+            if (blinkCount == 10) {
                 blinkCount = 0;
                 idReq = false;
             }
