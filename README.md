@@ -29,7 +29,7 @@ This project introduces a build-your-own kit where truss members can be setup in
 - Forces are displayed as a number directly beneath the link number
 - Units are Newtons (N)
 
-###Module Control
+### Module Control
 **Zeroing**
 - Press and hold button on hub module until module LEDs turn yellow
 - 1 LED will be on
